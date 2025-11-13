@@ -9,54 +9,22 @@ Actualmente funciona en **Python** con un core básico; más adelante se añadir
 
 ---
 
-## Estructura del Proyecto (Draft)
-
-hotel_planner/
-│
-├── venv/                      
-├── hotel_planner/
-│   ├── main.py
-│   ├── models/
-│   │   ├── event.py
-|   |   ├── inventory.py
-│   │   ├── resource.py
-│   │   └── restriction.py
-│   ├── services/
-│   │   ├── scheduler.py
-│   │   ├── conflict_checker.py
-│   │   └── persistence.py
-│   ├── gui/                   
-│   │   ├── app.py
-│   │   ├── windows/
-│   │   │   ├── main_window.py
-│   │   │   └── event_form.py
-│   │   └── assets/
-│   │       ├── icons/
-│   │       └── styles/
-│   └── data/
-│       └── hotel_data.json
-│
-├── requirements.txt
-└── README.md
-
----
-
 ## Instalación
 
-1. # Clonar el repositorio:
+# 1. Clonar el repositorio:
 ```bash
 git clone https://github.com/tu_usuario/mi_proyecto_hotel.git
 cd Hotel_Planner_Project
 ```
 
-2. # Crear y activar el entorno virtual:
+# 2. Crear y activar el entorno virtual:
 ```bash
 python3 -m venv venv
 source venv/bin/activate   # Linux/Mac
 # .\venv\Scripts\activate # Windows
 ```
 
-3. # Instalar dependencias:
+# 3. Instalar dependencias:
 ```bash
 pip install -r requirements.txt
 ```
@@ -65,14 +33,14 @@ Actualmente, el proyecto se encuentra en desarrollo...
 
 ## Funcionalidades Planeadas
 
-1. # Evitar conflictos de recursos al planificar eventos.
+1. Evitar conflictos de recursos al planificar eventos.
 
-2. # Validar restricciones entre recursos.
+2. Validar restricciones entre recursos.
 
-3. # Manejar eventos recurrentes (diarios, semanales, mensuales).
+3. Manejar eventos recurrentes (diarios, semanales, mensuales).
 
-4. # Buscar automáticamente horarios disponibles.
+4. Buscar automáticamente horarios disponibles.
 
-5. # Guardar y cargar datos desde archivos JSON.
+5. Guardar y cargar datos desde archivos JSON.
 
-6. # Interfaz gráfica con CustomTkinter (fase futura).
+6. Interfaz gráfica con CustomTkinter (fase futura).
