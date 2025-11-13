@@ -1,0 +1,17 @@
+# Entorno virtual
+venv/
+
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de sistema (Linux/macOS)
+.DS_Store
+*.swp
+
+# Archivos de logs
+*.log
+
+# Archivos de datos temporales (opcional)
+*.tmp
