@@ -48,7 +48,7 @@ class Inventory:
         """
         r = self.find_by_name(name)
         if r and r.quantity >= amount:
-            r.quantity -= amount
+            r.quantity = r.quantity - amount
             return True
         return False
 
@@ -56,7 +56,7 @@ class Inventory:
         """Aumenta la cantidad disponible de un recurso."""
         r = self.find_by_name(name)
         if r:
-            r.quantity += amount
+            r.quantity = r.quantity + amount
             return True
         return False
 
@@ -83,34 +83,34 @@ class Inventory:
                 # Crear instancia según subclase
                 if cls == Room:
                     r = Room(
-                        name=rdata["name"],
+                        rdata.get("name"),
                         capacity=rdata.get("capacity", 1),
                         room_type=rdata.get("room_type", "estándar"),
-                        interior=rdata.get("interior", True),
-                        quantity=rdata.get("quantity", 1)
+                        interior=rdata.get("interior", True)
                     )
                 elif cls == Employee:
                     r = Employee(
-                        name=rdata["name"],
-                        role=rdata.get("role", "desconocido"),
-                        shift=rdata.get("shift", "diurno"),
-                        quantity=rdata.get("quantity", 1)
+                        rdata.get("name"),
+                        role=rdata.get("role", ""),
+                        shift=rdata.get("shift", "diurno")
                     )
                 elif cls == Item:
                     r = Item(
-                        name=rdata["name"],
+                        rdata.get("name"),
                         description=rdata.get("description"),
                         quantity=rdata.get("quantity", 1)
                     )
                 else:
                     r = Resource(
-                        name=rdata["name"],
+                        rdata.get("name"),
                         category=rdata.get("category", "item"),
                         quantity=rdata.get("quantity", 1)
                     )
 
-                # Ajustar disponibilidad automáticamente
-                r.available = r.quantity > 0
+                # Ajustar cantidad y disponibilidad
+                r.quantity = rdata.get("quantity", getattr(r, "quantity", 1))
+                r.available = rdata.get("available", r.quantity > 0)
+
                 self.add_resource(r)
 
     # ----------------------------

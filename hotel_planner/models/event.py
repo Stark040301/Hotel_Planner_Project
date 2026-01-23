@@ -19,11 +19,27 @@ class Event:
             raise ValueError("La fecha de fin debe ser posterior a la fecha de inicio.")
 
         self.name = name
-        self.resources = resources or []  # Lista de objetos Resource
         self.recurrence = recurrence  # Por ejemplo: "daily", "weekly", etc.
 
+        # Normalizar y almacenar recursos como lista de dicts {name, quantity}
+        self.resources = []
+        if resources:
+            for r in resources:
+                # r puede ser: objeto Resource (tiene .name), string, o dict {'name', 'quantity'}
+                if hasattr(r, "name"):
+                    rname = str(r.name)
+                    qty = getattr(r, "quantity", 1)
+                elif isinstance(r, dict):
+                    rname = str(r.get("name"))
+                    qty = int(r.get("quantity", 1))
+                else:
+                    rname = str(r)
+                    qty = 1
+                self.add_resource(rname, qty)
+
     def __repr__(self):
-        return f"<Event {self.name} ({self.start} - {self.end}) Recurrence: {self.recurrence}>"
+        res_summary = ", ".join(f"{r['name']}({r['quantity']})" for r in self.resources)
+        return f"<Event {self.name} ({self.start} - {self.end}) resources: [{res_summary}] recurrence: {self.recurrence}>"
 
     # ----------------------------
     # Métodos útiles
@@ -42,15 +58,56 @@ class Event:
         overlap = (earliest_end - latest_start).total_seconds()
         return overlap > 0
 
-    def add_resource(self, resource):
-        """Agrega un recurso (objeto Resource) al evento."""
-        if resource not in self.resources:
-            self.resources.append(resource)
+    # ----------------------------
+    # Gestión de recursos con cantidad
+    # ----------------------------
+    def _normalize_name(self, name):
+        return str(name).lower().strip()
 
-    def remove_resource(self, resource):
-        """Elimina un recurso del evento."""
-        if resource in self.resources:
-            self.resources.remove(resource)
+    def add_resource(self, resource, quantity: int = 1):
+        """
+        Agrega o incrementa la cantidad de un recurso en el evento.
+        resource: Resource object, string (nombre) o dict {'name':..., 'quantity':...}
+        """
+        if hasattr(resource, "name"):
+            name = resource.name
+        elif isinstance(resource, dict):
+            name = resource.get("name")
+            quantity = int(resource.get("quantity", quantity))
+        else:
+            name = resource
+        name = self._normalize_name(name)
+        if quantity < 1:
+            raise ValueError("quantity debe ser >= 1")
+
+        for entry in self.resources:
+            if entry["name"] == name:
+                entry["quantity"] += int(quantity)
+                return
+        self.resources.append({"name": name, "quantity": int(quantity)})
+
+    def remove_resource(self, name, quantity: int = None):
+        """
+        Reduce o elimina un recurso del evento.
+        Si quantity es None elimina la entrada por completo.
+        Si quantity especificado, resta y elimina si llega a 0.
+        """
+        name = self._normalize_name(name)
+        for entry in list(self.resources):
+            if entry["name"] == name:
+                if quantity is None or quantity >= entry["quantity"]:
+                    self.resources.remove(entry)
+                else:
+                    entry["quantity"] -= int(quantity)
+                return
+
+    def get_resource_quantity(self, name) -> int:
+        """Devuelve la cantidad solicitada de un recurso en este evento (0 si no existe)."""
+        name = self._normalize_name(name)
+        for entry in self.resources:
+            if entry["name"] == name:
+                return int(entry["quantity"])
+        return 0
 
     def to_dict(self):
         """Convierte el evento a diccionario serializable (JSON)."""
@@ -58,6 +115,18 @@ class Event:
             "name": self.name,
             "start": self.start.isoformat(),
             "end": self.end.isoformat(),
-            "resources": [r.name for r in self.resources],
+            "resources": [{"name": r["name"], "quantity": r["quantity"]} for r in self.resources],
             "recurrence": self.recurrence
         }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Reconstruye Event desde dict (útil al cargar)."""
+        resources = data.get("resources", [])
+        return cls(
+            name=data["name"],
+            start=data["start"],
+            end=data["end"],
+            resources=resources,
+            recurrence=data.get("recurrence")
+        )

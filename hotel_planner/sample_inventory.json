@@ -1,0 +1,29 @@
+[
+    {
+        "name": "Sala Grande",
+        "type": "Room",
+        "category": "room",
+        "quantity": 1,
+        "available": true,
+        "capacity": 100,
+        "room_type": "salón",
+        "interior": true
+    },
+    {
+        "name": "Proyector",
+        "type": "Item",
+        "category": "item",
+        "quantity": 3,
+        "available": true,
+        "description": "Full HD, HDMI"
+    },
+    {
+        "name": "Juan Pérez",
+        "type": "Employee",
+        "category": "employee",
+        "quantity": 1,
+        "available": true,
+        "role": "Técnico AV",
+        "shift": "diurno"
+    }
+]
