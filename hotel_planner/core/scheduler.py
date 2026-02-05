@@ -1,8 +1,11 @@
+import json
+import os
+from pathlib import Path
 from collections import defaultdict
 from bisect import bisect_left
 from datetime import timedelta
 
-from hotel_planner.models.resource import Resource, Room, Employee, Item
+from hotel_planner.models.resource import Resource, Room, Employee, Item, validate_resource_constraints
 from hotel_planner.models.event import Event
 from hotel_planner.models.inventory import Inventory
 
@@ -43,6 +46,24 @@ class Scheduler:
         normalized_name = self._normalize(event.name)
         if normalized_name in self.name_to_event:
             return (False, "Ya existe un evento con ese nombre")
+
+        # --- Validación de restricciones entre recursos (co-requisitos / exclusiones) ---
+        try:
+            requested = []
+            for entry in getattr(event, "resources", []) or []:
+                if isinstance(entry, dict):
+                    nm = entry.get("name")
+                else:
+                    nm = getattr(entry, "name", None) or str(entry)
+                if nm:
+                    requested.append(nm)
+            ok_constraints, constraint_errs = validate_resource_constraints(requested, list(self.inventory.resources))
+            if not ok_constraints:
+                # devolver estructura con detalles para que la UI la muestre
+                return (False, {"constraint_error": constraint_errs})
+        except Exception:
+            # si el validador falla inesperadamente, seguimos con las validaciones normales
+            pass
 
         # Comprobar recursos y cantidades pedidas
         for entry in event.resources:
@@ -142,3 +163,84 @@ class Scheduler:
             candidate_start = candidate_start + step
 
         return None
+
+    # ----------------------------
+    # Persistencia de eventos
+    # ----------------------------
+    def save_events(self, path):
+        """
+        Guarda los eventos actuales en JSON en la ruta indicada.
+        Escritura atómica: escribe en un archivo temporal y luego reemplaza.
+        path: str o Path
+        Devuelve (True, None) o (False, "mensaje de error")
+        """
+        try:
+            p = Path(path)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            data = {
+                "version": 1,
+                "events": [e.to_dict() for e in self.events_sorted]
+            }
+            tmp = p.with_suffix(p.suffix + ".tmp") if p.suffix else Path(str(p) + ".tmp")
+            with tmp.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            os.replace(str(tmp), str(p))
+            return (True, None)
+        except Exception as exc:
+            return (False, str(exc))
+
+    def load_events(self, path, validate: bool = True):
+        """
+        Carga eventos desde JSON.
+        - Si validate=True: intenta añadir cada evento vía add_event (aplica validaciones).
+          Devuelve (True, None) si todo cargó; si hay errores devuelve (False, errores_dict).
+        - Si validate=False: reconstruye índices directamente (se asume que los datos son confiables).
+        path: str o Path
+        """
+        p = Path(path)
+        if not p.exists():
+            return (False, f"File not found: {p}")
+
+        try:
+            with p.open("r", encoding="utf-8") as f:
+                payload = json.load(f)
+            events_data = payload.get("events", [])
+        except Exception as exc:
+            return (False, f"Error reading JSON: {exc}")
+
+        if validate:
+            # limpiar estado actual antes de cargar validado
+            self.events_sorted = []
+            self.name_to_event = {}
+            self.resource_index = defaultdict(list)
+
+            errors = {}
+            for ed in events_data:
+                try:
+                    ev = Event.from_dict(ed)
+                except Exception as exc:
+                    errors[ed.get("name", "<unknown>")] = f"Invalid event data: {exc}"
+                    continue
+                ok, reason = self.add_event(ev)
+                if not ok:
+                    errors[ev.name] = reason
+            if errors:
+                return (False, errors)
+            return (True, None)
+        else:
+            # reconstruir índices sin pasar por add_event
+            self.events_sorted = []
+            self.name_to_event = {}
+            self.resource_index = defaultdict(list)
+
+            for ed in events_data:
+                ev = Event.from_dict(ed)
+                # insertar ordenado
+                starts = [e.start for e in self.events_sorted]
+                idx = bisect_left(starts, ev.start)
+                self.events_sorted.insert(idx, ev)
+                self.name_to_event[self._normalize(ev.name)] = ev
+                for entry in ev.resources:
+                    rname = self._normalize(entry.get("name"))
+                    self.resource_index[rname].append(ev)
+            return (True, None)

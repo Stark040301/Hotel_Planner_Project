@@ -1,7 +1,10 @@
+customtkinter==5.2.2
+darkdetect==0.8.0
 iniconfig==2.3.0
 markdown-it-py==4.0.0
 mdurl==0.1.2
 packaging==25.0
+pillow==12.1.0
 pluggy==1.6.0
 Pygments==2.19.2
 pytest==9.0.1
