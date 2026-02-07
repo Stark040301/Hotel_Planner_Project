@@ -10,9 +10,9 @@ from hotel_planner.ui.screens.edit_resources import AddRemoveResourceView
 from hotel_planner.ui.screens.events_view import PlannedEventsView
 from hotel_planner.ui.screens.create_event import ManageEventsView
 from pathlib import Path
-from hotel_planner.models.inventory_store import ensure_working_copy, load_inventory_from_json, write_default_if_missing
 import json
-
+from hotel_planner.models import event_store as ev_store
+from hotel_planner.models import inventory_store as inv_store
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue")
 
@@ -39,14 +39,17 @@ class App(customtkinter.CTk):
                 _default_content = {"version": 1, "resources": []}
 
             # ensure a default file exists in the package data and create working copy if missing
-            write_default_if_missing(DEFAULT, _default_content)
-            working_path = ensure_working_copy(DEFAULT, WORKING)
+            inv_store.write_default_if_missing(DEFAULT, _default_content)
+            working_path = inv_store.ensure_working_copy(DEFAULT, WORKING)
 
             # load inventory from the working json and create scheduler/controller
-            inventory = load_inventory_from_json(working_path)
+            inventory = inv_store.load_inventory_from_json(working_path)
             scheduler = Scheduler(inventory)
             controller = Controller(scheduler)
         self.controller = controller
+
+        # asegurar que tenemos referencia al scheduler (venga del controller o de la creación anterior)
+        scheduler = getattr(self.controller, "scheduler", None)
 
         # configure grid layout (4x4)
         self.grid_columnconfigure(1, weight=1)
@@ -113,6 +116,30 @@ class App(customtkinter.CTk):
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
 
+        # Default events
+        DEFAULT_EVENTS = Path(__file__).resolve().parents[2] / "data" / "default_events.json"
+        WORKING_EVENTS = Path.home() / ".hotel_planner" / "events.json"
+
+        # asegurar default y working
+        try:
+            _def_ev = json.loads(DEFAULT_EVENTS.read_text(encoding="utf-8"))
+        except Exception:
+            _def_ev = {"version":1,"events": []}
+        ev_store.write_default_if_missing(DEFAULT_EVENTS, _def_ev)
+        working_events = ev_store.ensure_working_copy(DEFAULT_EVENTS, WORKING_EVENTS)
+        events = ev_store.load_events_from_json(working_events)
+
+        # pasar eventos al scheduler (simple: llamar a un método existente o inyectar)
+        if hasattr(scheduler, "load_events_from_list"):
+            scheduler.load_events_from_list(events)
+        elif hasattr(controller, "load_events"):
+            controller.load_events(events)
+        else:
+            # guardamos events en scheduler._events por compatibilidad mínima
+            try:
+                scheduler._events = events
+            except Exception:
+                pass
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -164,9 +191,9 @@ if __name__ == "__main__":
         _default_content = json.loads(DEFAULT.read_text(encoding="utf-8"))
     except Exception:
         _default_content = {"version":1,"resources":[]}
-    write_default_if_missing(DEFAULT, _default_content)
-    working = ensure_working_copy(DEFAULT, WORKING)
-    inventory = load_inventory_from_json(working)
+    inv_store.write_default_if_missing(DEFAULT, _default_content)
+    working = inv_store.ensure_working_copy(DEFAULT, WORKING)
+    inventory = inv_store.load_inventory_from_json(working)
     scheduler = Scheduler(inventory)
     controller = Controller(scheduler)
     app = App(controller=controller)

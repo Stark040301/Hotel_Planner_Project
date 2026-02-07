@@ -110,7 +110,7 @@ class Scheduler:
                 else:
                     nm = getattr(entry, "name", None) or str(entry)
                 if nm:
-                    requested.append(nm)
+                    requested.append(self._normalize(nm))
             ok_constraints, constraint_errs = validate_resource_constraints(requested, list(self.inventory.resources))
             if not ok_constraints:
                 # devolver estructura con detalles para que la UI la muestre
@@ -235,7 +235,8 @@ class Scheduler:
                 "version": 1,
                 "events": [e.to_dict() for e in self.events_sorted]
             }
-            tmp = p.with_suffix(p.suffix + ".tmp") if p.suffix else Path(str(p) + ".tmp")
+            # crear archivo temporal junto al destino: <name>.tmp
+            tmp = p.with_name(p.name + ".tmp")
             with tmp.open("w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             os.replace(str(tmp), str(p))
@@ -298,3 +299,47 @@ class Scheduler:
                     rname = self._normalize(entry.get("name"))
                     self.resource_index[rname].append(ev)
             return (True, None)
+
+    # Conveniencia: aceptar una lista de dicts (por ejemplo el payload cargado desde JSON)
+    def load_events_from_list(self, events_data: list, validate: bool = True):
+        """
+        Carga eventos a partir de una lista de dicts (cada dict en el mismo formato que Event.to_dict()).
+        Si validate=True usa add_event para aplicar todas las validaciones; si False reconstruye índices.
+        Devuelve (True, None) o (False, errores)
+        """
+        if validate:
+            # limpiar estado actual
+            self.events_sorted = []
+            self.name_to_event = {}
+            self.resource_index = defaultdict(list)
+            errors = {}
+            for ed in events_data:
+                try:
+                    ev = Event.from_dict(ed)
+                except Exception as exc:
+                    errors[ed.get("name", "<unknown>")] = f"Invalid event data: {exc}"
+                    continue
+                ok, reason = self.add_event(ev)
+                if not ok:
+                    errors[ev.name] = reason
+            if errors:
+                return (False, errors)
+            return (True, None)
+        else:
+            # reconstruir índices sin pasar por add_event
+            self.events_sorted = []
+            self.name_to_event = {}
+            self.resource_index = defaultdict(list)
+            for ed in events_data:
+                ev = Event.from_dict(ed)
+                idx = bisect_left([e.start for e in self.events_sorted], ev.start)
+                self.events_sorted.insert(idx, ev)
+                self.name_to_event[self._normalize(ev.name)] = ev
+                for entry in ev.resources:
+                    rname = self._normalize(entry.get("name"))
+                    self.resource_index[rname].append(ev)
+            return (True, None)
+
+    def list_events_as_dicts(self):
+        """Devuelve la lista de eventos en formato dict (útil para la UI)."""
+        return [e.to_dict() for e in self.events_sorted]

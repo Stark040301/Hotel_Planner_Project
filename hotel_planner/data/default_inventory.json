@@ -93,7 +93,7 @@
       "room_type": "piscina",
       "interior": false,
       "quantity": 1,
-      "requires": ["Salvavidas", "Chalecos Salvavidas"],
+      "requires": ["Salvavidas", "Chaleco Salvavidas"],
       "excludes": ["Carpa Exterior (grande)"]
     },
     {
@@ -318,7 +318,7 @@
     {
       "type": "Item",
       "category": "item",
-      "name": "Equipo de Sonido (paquete grande)",
+      "name": "Equipo de Sonido",
       "description": "PA: amplificadores, altavoces, mixer",
       "quantity": 2,
       "requires": ["Técnico de Sonido", "Generador Portátil"]
@@ -334,7 +334,7 @@
     {
       "type": "Item",
       "category": "item",
-      "name": "Sistema de Iluminación (rig completo)",
+      "name": "Sistema de Iluminación",
       "description": "Luces para escenario y pista",
       "quantity": 2,
       "requires": ["Técnico de Iluminación", "Generador Industrial"]
@@ -395,21 +395,21 @@
     {
       "type": "Item",
       "category": "item",
-      "name": "Mantelería de Repuesto (sets)",
+      "name": "Mantelería de Repuesto",
       "description": "Sets de manteles y servilletas por mesa",
       "quantity": 100
     },
     {
       "type": "Item",
       "category": "item",
-      "name": "Cubertería (sets)",
+      "name": "Cubertería",
       "description": "Sets de cubiertos para servicio de comedor",
       "quantity": 200
     },
     {
       "type": "Item",
       "category": "item",
-      "name": "Cristalería (varios tipos)",
+      "name": "Cristalería",
       "description": "Copas, vasos y copas de vino",
       "quantity": 400
     },
@@ -485,7 +485,7 @@
     {
       "type": "Item",
       "category": "item",
-      "name": "Toallas de Spa (sets)",
+      "name": "Toallas de Spa",
       "description": "Toallas grandes para tratamientos",
       "quantity": 200
     },
@@ -515,7 +515,7 @@
     {
       "type": "Item",
       "category": "item",
-      "name": "Chalecos Salvavidas",
+      "name": "Chaleco Salvavidas",
       "description": "Chalecos para uso en piscina/plays",
       "quantity": 30,
       "requires": ["Salvavidas"]
@@ -525,8 +525,7 @@
       "category": "item",
       "name": "Kit de Primeros Auxilios",
       "description": "Botiquín grande para emergencias",
-      "quantity": 10,
-      "requires": ["Seguridad"]
+      "quantity": 10
     },
     {
       "type": "Item",
