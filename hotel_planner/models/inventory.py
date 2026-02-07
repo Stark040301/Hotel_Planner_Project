@@ -21,6 +21,20 @@ class Inventory:
     # ----------------------------
     def add_resource(self, resource):
         """Agrega un nuevo recurso al inventario."""
+        existing = self.find_by_name(resource.name)
+        if existing:
+            # sumar cantidades si el atributo existe
+            try:
+                existing.quantity = int(existing.quantity) + int(getattr(resource, "quantity", 1))
+            except Exception:
+                pass
+            # fusionar metadatos si existen
+            for attr in ("requires", "excludes", "excludes_categories"):
+                if hasattr(existing, attr) and hasattr(resource, attr):
+                    try:
+                        getattr(existing, attr).update(getattr(resource, attr))
+                    except Exception:
+                        pass
         self.resources.append(resource)
 
     def find_by_name(self, name):

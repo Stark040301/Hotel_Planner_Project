@@ -10,6 +10,7 @@ from bisect import bisect_left
 
 from hotel_planner.core.scheduler import Scheduler
 from hotel_planner.models.event import Event
+from hotel_planner.models.resource import Room, Employee, Item
 
 
 class Controller:
@@ -37,13 +38,119 @@ class Controller:
     # -----------------------
     # Read helpers (UI <--- backend)
     # -----------------------
-    def list_resources(self) -> List[dict]:
-        with self._lock:
-            return [r.to_dict() for r in self.scheduler.inventory.resources]
 
     def list_events(self) -> List[dict]:
         with self._lock:
             return [e.to_dict() for e in self.scheduler.list_events()]
+
+    def list_resources(self) -> List:
+        """
+        Devuelve la lista actual de Resource objects desde el inventory.
+        Simple y directo: UI llamará a esto para poblar las tablas.
+        """
+        with self._lock:
+            inv = getattr(self.scheduler, "inventory", None)
+            if inv is None:
+                return []
+            return list(getattr(inv, "resources", []))
+
+    def format_usage_intervals(self, resource_name: str, fmt: str = "%d/%m/%y %H:%M") -> List[str]:
+        """
+        Delega directamente en scheduler.format_usage_intervals bajo lock.
+        Mantenerlo simple: no fallbacks ni lógica extra aquí.
+        """
+        with self._lock:
+            return self.scheduler.format_usage_intervals(resource_name, fmt)
+
+    # -----------------------
+    # Resource creation helpers (UI ---> backend)
+    # -----------------------
+    def add_room(
+        self,
+        name: str,
+        capacity: int,
+        room_type: str = "estándar",
+        interior: bool = True,
+        quantity: int = 1,
+        requires: Optional[List[str]] = None,
+        excludes: Optional[List[str]] = None,
+        excludes_categories: Optional[List[str]] = None,
+    ) -> Tuple[bool, Optional[Union[dict, str]]]:
+        try:
+            room = Room(name, capacity, room_type=room_type, interior=interior)
+            room.quantity = int(quantity)
+            if requires:
+                room.requires.update(n.strip().lower() for n in requires if n)
+            if excludes:
+                room.excludes.update(n.strip().lower() for n in excludes if n)
+            if excludes_categories:
+                room.excludes_categories.update(n.strip().lower() for n in excludes_categories if n)
+        except Exception as exc:
+            return (False, f"Invalid room data: {exc}")
+
+        with self._lock:
+            try:
+                added = self.scheduler.inventory.add_resource(room)
+                return (True, added.to_dict())
+            except Exception as exc:
+                return (False, str(exc))
+
+    def add_employee(
+        self,
+        name: str,
+        role: str,
+        shift: str = "diurno",
+        quantity: int = 1,
+        requires: Optional[List[str]] = None,
+        excludes: Optional[List[str]] = None,
+        excludes_categories: Optional[List[str]] = None,
+    ) -> Tuple[bool, Optional[Union[dict, str]]]:
+        try:
+            emp = Employee(name, role, shift=shift)
+            emp.quantity = int(quantity)
+            if requires:
+                emp.requires.update(n.strip().lower() for n in requires if n)
+            if excludes:
+                emp.excludes.update(n.strip().lower() for n in excludes if n)
+            if excludes_categories:
+                emp.excludes_categories.update(n.strip().lower() for n in excludes_categories if n)
+        except Exception as exc:
+            return (False, f"Invalid employee data: {exc}")
+
+        with self._lock:
+            try:
+                added = self.scheduler.inventory.add_resource(emp)
+                return (True, added.to_dict())
+            except Exception as exc:
+                return (False, str(exc))
+
+    def add_item(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        quantity: int = 1,
+        requires: Optional[List[str]] = None,
+        excludes: Optional[List[str]] = None,
+        excludes_categories: Optional[List[str]] = None,
+    ) -> Tuple[bool, Optional[Union[dict, str]]]:
+        try:
+            # Item accepts kwargs forwarded to Resource
+            item = Item(name, description=description, quantity=int(quantity))
+            if requires:
+                item.requires.update(n.strip().lower() for n in requires if n)
+            if excludes:
+                item.excludes.update(n.strip().lower() for n in excludes if n)
+            if excludes_categories:
+                item.excludes_categories.update(n.strip().lower() for n in excludes_categories if n)
+        except Exception as exc:
+            return (False, f"Invalid item data: {exc}")
+
+        with self._lock:
+            try:
+                added = self.scheduler.inventory.add_resource(item)
+                return (True, added.to_dict())
+            except Exception as exc:
+                return (False, str(exc))
 
     # -----------------------
     # Mutation helpers (UI ---> backend)

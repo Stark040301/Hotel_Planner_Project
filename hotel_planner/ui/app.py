@@ -1,287 +1,173 @@
-import customtkinter as ctk
-import tkinter as tk
-import tkinter.font as tkfont
+import tkinter
+import tkinter.messagebox
+import customtkinter
+from hotel_planner.ui.controller import Controller
+from hotel_planner.models.inventory import Inventory
+from hotel_planner.core.scheduler import Scheduler
+from hotel_planner.ui.widgets.vertical_segmented import VerticalSegmentedButton
+from hotel_planner.ui.screens.inventory_view import InventoryView
+from hotel_planner.ui.screens.edit_resources import AddRemoveResourceView
+from hotel_planner.ui.screens.events_view import PlannedEventsView
+from hotel_planner.ui.screens.create_event import ManageEventsView
 from pathlib import Path
-from PIL import Image, ImageTk  # pillow debe estar instalado
+from hotel_planner.models.inventory_store import ensure_working_copy, load_inventory_from_json, write_default_if_missing
+import json
 
-class App(ctk.CTk):
-    """
-    Ventana principal minimal: sidebar con botones (placeholders),
-    área principal con imagen de fondo y título, y status bar.
-    """
+customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue")
 
-    def __init__(self, controller=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.controller = controller  # opcional, será usado más adelante
-        self.title("Hotel Management Simulator — Menu principal")
-        self.geometry("1000x640")
-        ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("dark-blue")
 
-        # Guardar referencia a la imagen para evitar que sea recolectada
-        self._bg_photo = None
+class App(customtkinter.CTk):
+    def __init__(self, controller: Controller = None):
+        super().__init__()
 
-        self._build_layout()
+        # configure window
+        self.title("Hotel Event Manager")
+        self.geometry(f"{1100}x{580}")
+        # controller: usar el pasado o crear uno por defecto
+        if controller is None:
+            # ensure working inventory exists: copy default from package data to user config if missing
+            DEFAULT = Path(__file__).resolve().parents[2] / "data" / "default_inventory.json"
+            WORKING = Path.home() / ".hotel_planner" / "inventory.json"
 
-    def _build_layout(self):
-        # Contenedor principal
-        container = ctk.CTkFrame(self)
-        container.pack(fill="both", expand=True, padx=8, pady=8)
-
-        # Main area
-        main_area = ctk.CTkFrame(container)
-        main_area.pack(side="left", fill="both", expand=True)
-
-        # Intentar cargar imagen de fondo desde assets y dibujar texto en un Canvas (sin fondo detrás del texto)
-        assets_dir = Path(__file__).resolve().parent / "assets"
-        bg_path = assets_dir / "bg.jpeg"  # coloca tu imagen aquí
-        if bg_path.exists():
+            # read packaged default if present, else use a minimal default
+            _default_content = None
             try:
-                img = Image.open(bg_path)
-                # keep original PIL image and create a Canvas that will resize with the window
-                self._bg_image = img
-                # store original image size
-                self._bg_image_size = self._bg_image.size  # (orig_w, orig_h)
-                # track last requested size to avoid thrash
-                self._last_request_size = None
-                canvas = tk.Canvas(main_area, highlightthickness=0)
-                canvas.pack(fill="both", expand=True)
-
-                # initial image (will be updated on first <Configure>)
-                w_init, h_init = 800, 560
-                resized = self._bg_image.resize((w_init, h_init), Image.LANCZOS)
-                self._bg_photo = ImageTk.PhotoImage(resized)
-                # create image centered so repositioning is stable
-                self._bg_img_id = canvas.create_image(w_init//2, h_init//2, image=self._bg_photo, anchor="center")
-
-                # create text items and keep their ids so we can reposition later
-                # create tk Font objects so we can change size dynamically
-                title_size = 36
-                subtitle_size = 18
-                self._title_font = tkfont.Font(family="Quicksand", size=title_size, weight="bold")
-                self._subtitle_font = tkfont.Font(family="Quicksand", size=subtitle_size, slant="italic")
-                # left-aligned text: use a left margin and anchor="w"
-                left_margin = max(24, int(w_init * 0.06))
-                self._title_id = canvas.create_text(left_margin, int(h_init * 0.06),
-                                                    text="Hotel Management Simulator",
-                                                    fill="#e9d8a6", font=self._title_font, anchor="w")
-                self._subtitle_id = canvas.create_text(left_margin, int(h_init * 0.12),
-                                                       text="Gestión de eventos y recursos",
-                                                       fill="#005f73", font=self._subtitle_font, anchor="w")
-
-                # store canvas reference and bind debounced resize handler
-                self._canvas = canvas
-
-                # --- draw-buttons-on-canvas helper (rounded corners) ---
-                btn_font = tkfont.Font(family="Quicksand", size=12, weight="bold")
-
-                def _create_canvas_button(c, x, y, w, h, text, callback,
-                                          fill="#005f73", hover="#0a9396", text_color="white", radius=8):
-                    """Draw a rounded-rect button composed of shapes + text. Returns dict with part ids."""
-                    left, top = x, y
-                    right, bottom = x + w, y + h
-                    r = radius
-                    parts = []
-                    # central rectangles (body)
-                    parts.append(c.create_rectangle(left + r, top, right - r, bottom, fill=fill, outline=""))
-                    parts.append(c.create_rectangle(left, top + r, right, bottom - r, fill=fill, outline=""))
-                    # corner circles
-                    parts.append(c.create_oval(left, top, left + 2 * r, top + 2 * r, fill=fill, outline=""))
-                    parts.append(c.create_oval(right - 2 * r, top, right, top + 2 * r, fill=fill, outline=""))
-                    parts.append(c.create_oval(left, bottom - 2 * r, left + 2 * r, bottom, fill=fill, outline=""))
-                    parts.append(c.create_oval(right - 2 * r, bottom - 2 * r, right, bottom, fill=fill, outline=""))
-                    # text
-                    txt_id = c.create_text(left + w / 2, top + h / 2, text=text, fill=text_color, font=btn_font)
-                    parts.append(txt_id)
-
-                    group = {"parts": parts, "fill": fill, "hover": hover, "text_id": txt_id}
-
-                    def _on_enter(e):
-                        for pid in parts[:-1]:
-                            c.itemconfig(pid, fill=hover)
-
-                    def _on_leave(e):
-                        for pid in parts[:-1]:
-                            c.itemconfig(pid, fill=fill)
-
-                    def _on_click(e):
-                        try:
-                            callback()
-                        except Exception:
-                            pass
-
-                    # bind events to all parts of the button
-                    for pid in parts:
-                        c.tag_bind(pid, "<Enter>", _on_enter)
-                        c.tag_bind(pid, "<Leave>", _on_leave)
-                        c.tag_bind(pid, "<Button-1>", _on_click)
-
-                    return group
-
-                # create canvas-drawn buttons (positions updated later in _do_resize)
-                self._canvas_buttons = {}
-                left_margin = max(24, int(w_init * 0.06))
-                y_start = int(h_init * 0.25)
-                btn_w = 220
-                btn_h = 44
-                spacing = max(40, int(h_init * 0.10))
-                self._canvas_buttons["create"] = _create_canvas_button(canvas, left_margin, y_start + 0 * spacing, btn_w, btn_h,
-                                                                       "Crear nuevo evento", self.on_create)
-                self._canvas_buttons["edit_events"] = _create_canvas_button(canvas, left_margin, y_start + 1 * spacing, btn_w, btn_h,
-                                                                            "Editar eventos", self.on_edit_events)
-                self._canvas_buttons["view_resources"] = _create_canvas_button(canvas, left_margin, y_start + 2 * spacing, btn_w, btn_h,
-                                                                                "Ver Recursos", self.on_view_resources)
-                self._canvas_buttons["edit_resources"] = _create_canvas_button(canvas, left_margin, y_start + 3 * spacing, btn_w, btn_h,
-                                                                                "Editar recursos", self.on_edit_resources)
-
-                 # debounce: schedule actual work after a short delay to avoid thrash
-                self._resize_after_id = None
-                canvas.bind("<Configure>", self._on_canvas_configure)
+                with DEFAULT.open("r", encoding="utf-8") as f:
+                    _default_content = json.load(f)
             except Exception:
-                pass
-        else:
-            # si no hay imagen, puedes crear el canvas vacío o usar CTkLabel normal
+                _default_content = {"version": 1, "resources": []}
+
+            # ensure a default file exists in the package data and create working copy if missing
+            write_default_if_missing(DEFAULT, _default_content)
+            working_path = ensure_working_copy(DEFAULT, WORKING)
+
+            # load inventory from the working json and create scheduler/controller
+            inventory = load_inventory_from_json(working_path)
+            scheduler = Scheduler(inventory)
+            controller = Controller(scheduler)
+        self.controller = controller
+
+        # configure grid layout (4x4)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure((2, 3), weight=0)
+        self.grid_rowconfigure((0, 1, 2), weight=1)
+
+        # create sidebar frame with widgets
+        self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
+        self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
+        self.sidebar_frame.grid_rowconfigure(4, weight=1)
+        self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="Hotel Event Manager", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+
+        # mapping de etiqueta -> método
+        self._seg_handlers = {
+            "Inventario": self.on_menu_inventory,
+            "Añadir Recurso": self.on_menu_add_resource,
+            "Eventos Planificados": self.on_menu_planned_events,
+            "Crear Evento": self.on_menu_create_event,
+        }
+        # pasar un dispatcher al comando del widget
+        self.seg_button = VerticalSegmentedButton(
+            self.sidebar_frame,
+            list(self._seg_handlers.keys()),
+            command=lambda v: self._seg_handlers.get(v, self._on_segment_default)(v),
+            width=160,
+            btn_height=36,
+            corner_radius=8,
+        )
+        self.seg_button.grid(row=1, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+        
+        self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
+        self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 0))
+        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
+                                                                       command=self.change_appearance_mode_event)
+        self.appearance_mode_optionemenu.grid(row=6, column=0, padx=20, pady=(10, 10))
+        self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
+        self.scaling_label.grid(row=7, column=0, padx=20, pady=(10, 0))
+        self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"],
+                                                               command=self.change_scaling_event)
+        self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
+
+        # --- Main area: contenedor y pantallas por cada opción del segmented ---
+        self.main_frame = customtkinter.CTkFrame(self, corner_radius=0)
+        self.main_frame.grid(row=0, column=1, rowspan=4, columnspan=3, sticky="nsew", padx=12, pady=12)
+        # asegúrate que el main_frame expande su contenido
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+
+        # crear instancias concretas de cada pantalla (inyectar self.controller)
+        self.frames = {
+            "Inventario": InventoryView(self.main_frame, controller=self.controller, corner_radius=8),
+            "Añadir Recurso": AddRemoveResourceView(self.main_frame, controller=self.controller, corner_radius=8),
+            "Eventos Planificados": PlannedEventsView(self.main_frame, controller=self.controller, corner_radius=8),
+            "Crear Evento": ManageEventsView(self.main_frame, controller=self.controller, corner_radius=8),
+        }
+        for f in self.frames.values():
+            f.grid(row=0, column=0, sticky="nsew")
+        # mostrar pantalla inicial
+        self._show_frame("Inventario")
+        
+        
+        # Default settiings
+        self.appearance_mode_optionemenu.set("Dark")
+        self.scaling_optionemenu.set("100%")
+
+
+    def change_appearance_mode_event(self, new_appearance_mode: str):
+        customtkinter.set_appearance_mode(new_appearance_mode)
+
+    def change_scaling_event(self, new_scaling: str):
+        new_scaling_float = int(new_scaling.replace("%", "")) / 100
+        customtkinter.set_widget_scaling(new_scaling_float)
+
+    # ----------------------
+    # Handlers para cada segmento
+    # ----------------------
+    def _show_frame(self, name: str):
+        """Levanta el frame identificado por name (si existe)."""
+        f = self.frames.get(name)
+        if not f:
+            return
+        try:
+            f.tkraise()
+        except Exception:
             pass
-
-        # Barra de estado en la parte inferior
-        self.status_lbl = ctk.CTkLabel(self, text="Listo", anchor="w")
-        self.status_lbl.pack(fill="x", side="bottom", padx=8, pady=(0,8))
-
-    # ---------- placeholders de acción (ahora solo actualizan status) ----------
-    def on_create(self):
-        # abrir diálogo modal para crear evento; _on_event_created se ejecuta si se crea
+        # llamar a on_show() para permitir que la vista refresque sus datos
         try:
-            CreateEventDialog(self, self.controller, on_created=self._on_event_created)
-        except Exception as exc:
-            self.status_lbl.configure(text=f"Error al abrir formulario: {exc}")
-
-    def _on_event_created(self, event_dict):
-        self.status_lbl.configure(text="Abrir pantalla: Crear eventos")
-
-    def on_edit_events(self):
-        # aquí abrirás la pantalla de edición de eventos
-        self.status_lbl.configure(text="Abrir pantalla: Editar eventos")
-
-    def on_view_resources(self):
-        # aquí mostrarás la lista de recursos
-        self.status_lbl.configure(text="Abrir pantalla: Ver recursos")
-
-    def on_edit_resources(self):
-        # aquí abrirás la edición de recursos
-        self.status_lbl.configure(text="Abrir pantalla: Editar recursos")
-
-    def _on_canvas_configure(self, event):
-        """Debounced wrapper for resize: schedule a single update after 150ms.
-           Ignore tiny changes (threshold) to avoid unnecessary resizes."""
-        try:
-            w, h = max(1, event.width), max(1, event.height)
-            # ignore tiny fluctuations (<8 px)
-            last = getattr(self, "_last_request_size", None)
-            if last:
-                lw, lh = last
-                if abs(w - lw) < 8 and abs(h - lh) < 8:
-                    return
-            self._last_request_size = (w, h)
-
-            if getattr(self, "_resize_after_id", None):
-                try:
-                    self.after_cancel(self._resize_after_id)
-                except Exception:
-                    pass
-            # increase debounce to 150ms to reduce thrash
-            self._resize_after_id = self.after(150, lambda: self._do_resize(w, h))
+            if hasattr(f, "on_show") and callable(getattr(f, "on_show")):
+                f.on_show()
         except Exception:
             pass
 
-    def _do_resize(self, w, h):
-        """Perform image/font resize and reposition. Runs on the main thread (after).
-           Resize preserving aspect ratio (cover) to avoid jitter."""
-        try:
-            orig_w, orig_h = getattr(self, "_bg_image_size", self._bg_image.size)
-            # compute scale to cover the canvas (no empty bars)
-            scale = max(w / orig_w, h / orig_h)
-            new_w = max(1, int(orig_w * scale))
-            new_h = max(1, int(orig_h * scale))
+    def on_menu_inventory(self, value=None):
+        self._show_frame("Inventario")
 
-            # if the requested size is the same as last applied, skip
-            last_applied = getattr(self, "_last_applied_size", None)
-            if last_applied and abs(last_applied[0] - new_w) < 4 and abs(last_applied[1] - new_h) < 4:
-                # still reposition text though (use left margin, no centrado)
-                try:
-                    left_margin = max(24, int(w * 0.06))
-                    self._canvas.coords(self._title_id, left_margin, int(h * 0.05))
-                    self._canvas.coords(self._subtitle_id, left_margin, int(h * 0.12))
-                except Exception:
-                    pass
-                return
+    def on_menu_add_resource(self, value=None):
+        self._show_frame("Añadir Recurso")
 
-            resized = self._bg_image.resize((new_w, new_h), Image.LANCZOS)
-            self._bg_photo = ImageTk.PhotoImage(resized)
-            self._canvas.itemconfig(self._bg_img_id, image=self._bg_photo)
-            # center the image (canvas coords are center)
-            self._canvas.coords(self._bg_img_id, w // 2, h // 2)
+    def on_menu_planned_events(self, value=None):
+        self._show_frame("Eventos Planificados")
 
-            # reposition texts (centered horizontally, relative vertical positions)
-            # position texts using a left margin and keep them left-aligned
-            left_margin = max(24, int(w * 0.06))
-            self._canvas.coords(self._title_id, left_margin, int(h * 0.05))
-            self._canvas.coords(self._subtitle_id, left_margin, int(h * 0.12))
+    def on_menu_create_event(self, value=None):
+        self._show_frame("Crear Evento")
 
-            # adjust font sizes proportionally
-            base = min(w, h)
-            new_title_size = max(12, int(base * 0.06))
-            new_subtitle_size = max(9, int(base * 0.03))
-            try:
-                self._title_font.configure(size=new_title_size)
-                self._subtitle_font.configure(size=new_subtitle_size)
-            except Exception:
-                pass
-
-            # remember applied size
-            self._last_applied_size = (new_w, new_h)
-        except Exception:
-            pass
-
-        # reposition buttons on the left of the canvas
-        try:
-            # update positions and sizes of canvas-drawn rounded buttons
-            y_start = int(h * 0.25)
-            spacing = max(40, int(h * 0.08))
-            btn_w = 220
-            btn_h = 44
-            left_margin = max(24, int(w * 0.06))
-            idx = 0
-            for key in ("create", "edit_events", "view_resources", "edit_resources"):
-                group = self._canvas_buttons.get(key)
-                if not group:
-                    idx += 1
-                    continue
-                parts = group["parts"]
-                r = 8
-                left = left_margin
-                top = y_start + idx * spacing
-                right = left + btn_w
-                bottom = top + btn_h
-                try:
-                    # rect middle 1
-                    self._canvas.coords(parts[0], left + r, top, right - r, bottom)
-                    # rect middle 2
-                    self._canvas.coords(parts[1], left, top + r, right, bottom - r)
-                    # ovals (TL, TR, BL, BR)
-                    self._canvas.coords(parts[2], left, top, left + 2 * r, top + 2 * r)
-                    self._canvas.coords(parts[3], right - 2 * r, top, right, top + 2 * r)
-                    self._canvas.coords(parts[4], left, bottom - 2 * r, left + 2 * r, bottom)
-                    self._canvas.coords(parts[5], right - 2 * r, bottom - 2 * r, right, bottom)
-                    # text
-                    self._canvas.coords(parts[6], left + btn_w / 2, top + btn_h / 2)
-                except Exception:
-                    pass
-                idx += 1
-        except Exception:
-            pass
+    def _on_segment_default(self, value=None):
+        print("Segmento no manejado:", value)
 
 
 if __name__ == "__main__":
-    # solo para probar la plantilla rápidamente
-    app = App()
+    DEFAULT = Path(__file__).resolve().parents[2] / "data" / "default_inventory.json"
+    WORKING = Path.home() / ".hotel_planner" / "inventory.json"
+    # asegurar default presente (opcional)
+    try:
+        _default_content = json.loads(DEFAULT.read_text(encoding="utf-8"))
+    except Exception:
+        _default_content = {"version":1,"resources":[]}
+    write_default_if_missing(DEFAULT, _default_content)
+    working = ensure_working_copy(DEFAULT, WORKING)
+    inventory = load_inventory_from_json(working)
+    scheduler = Scheduler(inventory)
+    controller = Controller(scheduler)
+    app = App(controller=controller)
     app.mainloop()

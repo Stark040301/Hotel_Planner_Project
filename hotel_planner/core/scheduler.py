@@ -38,6 +38,60 @@ class Scheduler:
                 total += event.get_resource_quantity(normalized_name)
         return total
 
+    def resource_usage_intervals(self, resource_name: str):
+        """
+        Devuelve una lista de segmentos donde el recurso está siendo usado.
+        Cada segmento es un dict: {"start": datetime, "end": datetime, "quantity": int}
+        Nota: no gestiona recurrencias; sólo eventos concretos presentes en resource_index.
+        """
+        norm = self._normalize(resource_name)
+        events = list(self.resource_index.get(norm, []))
+        points = []
+        for ev in events:
+            try:
+                qty = int(ev.get_resource_quantity(norm))
+            except Exception:
+                qty = 0
+            if qty <= 0:
+                continue
+            points.append((ev.start, qty))   # inicio: +qty
+            points.append((ev.end, -qty))    # fin: -qty
+
+        if not points:
+            return []
+
+        # ordenar; procesar cierres antes que aperturas en el mismo instante
+        points.sort(key=lambda p: (p[0], 0 if p[1] < 0 else 1))
+
+        segments = []
+        curr = 0
+        last_time = None
+        for t, delta in points:
+            if last_time is not None and t > last_time and curr > 0:
+                segments.append({"start": last_time, "end": t, "quantity": curr})
+            curr += delta
+            last_time = t
+
+        return segments
+
+    def format_usage_intervals(self, resource_name: str, fmt="%d/%m/%y %H:%M"):
+        """
+        Devuelve una lista de strings legibles con la información de uso.
+        Ej: '3 en uso (06/02/26 10:00 - 06/02/26 14:00)'
+        """
+        segs = self.resource_usage_intervals(resource_name)
+        out = []
+        for s in segs:
+            try:
+                start = s["start"].strftime(fmt)
+                end = s["end"].strftime(fmt)
+                out.append(f"{s['quantity']} en uso ({start} - {end})")
+            except Exception:
+                # en caso de objetos no-datetime, repr
+                out.append(f"{s['quantity']} en uso ({s['start']} - {s['end']})")
+        # TODO: añadir soporte para recurrencias (detectar eventos recurrentes y expandir/compactar)
+        return out
+
     # Comprueba si se puede programar; devuelve (True, None) o (False, motivo)
     def _can_schedule(self, event: Event):
         # Validaciones básicas
