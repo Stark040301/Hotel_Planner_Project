@@ -1,6 +1,13 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.font as tkfont
+import tkinter.messagebox as msg
+import json
+import os
+import tempfile
+import uuid
+from pathlib import Path
+from hotel_planner.models import inventory_store as inv_store
 import customtkinter as ctk
 from typing import Optional, Iterable
 from hotel_planner.models.resource import Resource, Room, Employee, Item
@@ -13,10 +20,23 @@ class InventoryView(ctk.CTkFrame):
         # guarda mínimos de columna por pestaña (usado para auto-ajustar)
         self._min_col_widths = {}
         self._build_ui()
+        # bind a virtual event so other views can notify us when inventory changed on disk
+        try:
+            root = self.winfo_toplevel()
+            root.bind("<<InventoryChanged>>", lambda ev: self.refresh())
+        except Exception:
+            # ignore if binding fails at init time
+            pass
 
     def _build_ui(self):
-        self.title = ctk.CTkLabel(self, text="Inventario del Hotel", font=ctk.CTkFont(size=18, weight="bold"))
-        self.title.pack(anchor="nw", padx=12, pady=(8, 6))
+        # header row: title (left) + actions (right)
+        header_row = ctk.CTkFrame(self)
+        header_row.pack(fill="x", padx=12, pady=(8, 6))
+        self.title = ctk.CTkLabel(header_row, text="Inventario del Hotel", font=ctk.CTkFont(size=18, weight="bold"))
+        self.title.pack(side="left")
+        # botón en la esquina superior derecha
+        del_btn = ctk.CTkButton(header_row, text="Eliminar recurso", command=self._delete_selected_resource, width=160)
+        del_btn.pack(side="right")
 
         # Tabbed area: three categories
         self.tabview = ctk.CTkTabview(self, width=900)
@@ -48,7 +68,7 @@ class InventoryView(ctk.CTkFrame):
 
     def _create_tree(self, tab: str, columns: tuple, headings: tuple, col_widths: tuple):
         frame = self.tabview.tab(tab)
-        container = tk.Frame(frame)
+        container = ctk.CTkFrame(frame)
         container.pack(fill="both", expand=True, padx=6, pady=6)
         tree = ttk.Treeview(container, columns=columns, show="headings", selectmode="browse", height=12)
         for col, head, w in zip(columns, headings, col_widths):
@@ -215,3 +235,111 @@ class InventoryView(ctk.CTkFrame):
                 tree.column(col, width=final_w)
             except Exception:
                 pass
+
+    def _get_selected_name(self):
+        """Devuelve (tree, resource_name) o (None, None) si no hay selección."""
+        try:
+            tab = self.tabview.get()
+            tree = self._trees.get(tab)
+            if tree is None:
+                return None, None
+            sel = tree.focus() or (tree.selection()[0] if tree.selection() else None)
+            if not sel:
+                return tree, None
+            vals = tree.item(sel, "values") or ()
+            name = vals[0] if len(vals) > 0 else None
+            return tree, name
+        except Exception:
+            return None, None
+
+    def _delete_selected_resource(self):
+        """Eliminar recurso seleccionado: intentar vía controller, si no via working JSON."""
+        tree, name = self._get_selected_name()
+        if name is None:
+            msg.showwarning("Seleccionar", "Selecciona un recurso primero.")
+            return
+
+        if not msg.askyesno("Confirmar eliminación", f"¿Eliminar recurso '{name}' del inventario?"):
+            return
+
+        # 1) intentar vía controller API si existe
+        try:
+            if self.controller and hasattr(self.controller, "remove_resource"):
+                ok = self.controller.remove_resource(name)
+                # controller may return (True, info) or True
+                if isinstance(ok, tuple):
+                    ok = ok[0]
+                if ok:
+                    msg.showinfo("Ok", f"Recurso '{name}' eliminado.")
+                    self.refresh()
+                    return
+        except Exception:
+            pass
+
+        # 2) update the single combined file ~/.hotel_planner/data.json
+        try:
+            COMBINED = Path.home() / ".hotel_planner" / "data.json"
+            if COMBINED.exists():
+                raw = COMBINED.read_text(encoding="utf-8")
+                payload = json.loads(raw) if raw.strip() else {"version": 1, "inventory": {"resources": []}, "events": []}
+            else:
+                payload = {"version": 1, "inventory": {"resources": []}, "events": []}
+
+            resources = (payload.get("inventory") or {}).get("resources", [])
+            before = len(resources)
+            resources = [r for r in resources if (r.get("name") or "") != name]
+            after = len(resources)
+            if after == before:
+                msg.showwarning("No encontrado", f"No se encontró '{name}' en el inventory combinado.")
+                return
+            payload["inventory"] = {"resources": resources}
+            tmp = COMBINED.with_name(COMBINED.name + ".tmp")
+            COMBINED.parent.mkdir(parents=True, exist_ok=True)
+            with tmp.open("w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+            os.replace(str(tmp), str(COMBINED))
+
+            # recargar inventario en memoria y actualizar controller/scheduler if possible
+            # build a small ephemeral legacy-style payload so inv_store can parse it
+            new_inv = None
+            try:
+                payload_now = payload  # payload ya leído arriba
+                inv_payload = {"version": payload_now.get("version", 1), "resources": (payload_now.get("inventory") or {}).get("resources", [])}
+                tmp_name = f"hotel_planner_inv_{os.getpid()}_{uuid.uuid4().hex}.json"
+                tmp_path = Path(tempfile.gettempdir()) / tmp_name
+                tmp_path.write_text(json.dumps(inv_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+                try:
+                    new_inv = inv_store.load_inventory_from_json(tmp_path)
+                except Exception:
+                    new_inv = None
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
+            except Exception:
+                new_inv = None
+            try:
+                if self.controller:
+                    if hasattr(self.controller, "scheduler") and getattr(self.controller, "scheduler", None) is not None:
+                        try:
+                            setattr(self.controller.scheduler, "inventory", new_inv)
+                        except Exception:
+                            pass
+                    try:
+                        setattr(self.controller, "inventory", new_inv)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            try:
+                root = self.winfo_toplevel()
+                root.event_generate("<<InventoryChanged>>", when="tail")
+            except Exception:
+                pass
+
+            msg.showinfo("Ok", f"Recurso '{name}' eliminado del inventario combinado.")
+            self.refresh()
+            return
+        except Exception as e:
+            msg.showerror("Error", f"No se pudo eliminar '{name}': {e}")
+            return

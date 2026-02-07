@@ -11,8 +11,11 @@ from hotel_planner.ui.screens.events_view import PlannedEventsView
 from hotel_planner.ui.screens.create_event import ManageEventsView
 from pathlib import Path
 import json
-from hotel_planner.models import event_store as ev_store
+import tempfile
+import os
+from hotel_planner.models import store as unified_store
 from hotel_planner.models import inventory_store as inv_store
+from hotel_planner.models import event_store as ev_store
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue")
 
@@ -26,26 +29,49 @@ class App(customtkinter.CTk):
         self.geometry(f"{1100}x{580}")
         # controller: usar el pasado o crear uno por defecto
         if controller is None:
-            # ensure working inventory exists: copy default from package data to user config if missing
-            DEFAULT = Path(__file__).resolve().parents[2] / "data" / "default_inventory.json"
-            WORKING = Path.home() / ".hotel_planner" / "inventory.json"
-
-            # read packaged default if present, else use a minimal default
-            _default_content = None
+            # Prefer single combined file ~/.hotel_planner/data.json
+            DATA_WORKING = Path.home() / ".hotel_planner" / "data.json"
+            DATA_DEFAULT = Path(__file__).resolve().parents[2] / "data" / "default_data.json"
+            # ensure default exists (use unified_store helper)
             try:
-                with DEFAULT.open("r", encoding="utf-8") as f:
-                    _default_content = json.load(f)
+                default_payload = json.loads(DATA_DEFAULT.read_text(encoding="utf-8")) if DATA_DEFAULT.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
             except Exception:
-                _default_content = {"version": 1, "resources": []}
+                default_payload = {"version": 1, "inventory": {"resources": []}, "events": []}
+            unified_store.write_default_if_missing(DATA_DEFAULT, default_payload)
+            unified_store.ensure_working_copy(DATA_DEFAULT, DATA_WORKING)
+            data = unified_store.load_data(DATA_WORKING)
 
-            # ensure a default file exists in the package data and create working copy if missing
-            inv_store.write_default_if_missing(DEFAULT, _default_content)
-            working_path = inv_store.ensure_working_copy(DEFAULT, WORKING)
+            # create ephemeral files for existing loaders (no persistent inventory.json/events.json)
+            tmpdir = Path(tempfile.gettempdir())
+            tmp_inv = tmpdir / f"hotel_planner_inventory_{os.getpid()}.json"
+            tmp_ev = tmpdir / f"hotel_planner_events_{os.getpid()}.json"
+            try:
+                inv_payload = {"version": data.get("version", 1), "resources": (data.get("inventory") or {}).get("resources", [])}
+                tmp_inv.write_text(json.dumps(inv_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            except Exception:
+                tmp_inv = None
+            try:
+                ev_payload = {"version": data.get("version", 1), "events": data.get("events", [])}
+                tmp_ev.write_text(json.dumps(ev_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            except Exception:
+                tmp_ev = None
 
-            # load inventory from the working json and create scheduler/controller
-            inventory = inv_store.load_inventory_from_json(working_path)
+            # load inventory using existing loader from ephemeral file (keeps Inventory construction)
+            if tmp_inv and tmp_inv.exists():
+                inventory = inv_store.load_inventory_from_json(tmp_inv)
+            else:
+                inventory = inv_store.load_inventory_from_json(DATA_DEFAULT) if DATA_DEFAULT.exists() else None
+
             scheduler = Scheduler(inventory)
             controller = Controller(scheduler)
+            # cleanup ephemeral files
+            try:
+                if tmp_inv and tmp_inv.exists():
+                    tmp_inv.unlink()
+                if tmp_ev and tmp_ev.exists():
+                    tmp_ev.unlink()
+            except Exception:
+                pass
         self.controller = controller
 
         # asegurar que tenemos referencia al scheduler (venga del controller o de la creación anterior)
@@ -117,25 +143,62 @@ class App(customtkinter.CTk):
         self.scaling_optionemenu.set("100%")
 
         # Default events
-        DEFAULT_EVENTS = Path(__file__).resolve().parents[2] / "data" / "default_events.json"
         WORKING_EVENTS = Path.home() / ".hotel_planner" / "events.json"
-
-        # asegurar default y working
         try:
-            _def_ev = json.loads(DEFAULT_EVENTS.read_text(encoding="utf-8"))
+            events = ev_store.load_events_from_json(WORKING_EVENTS)
         except Exception:
-            _def_ev = {"version":1,"events": []}
-        ev_store.write_default_if_missing(DEFAULT_EVENTS, _def_ev)
-        working_events = ev_store.ensure_working_copy(DEFAULT_EVENTS, WORKING_EVENTS)
-        events = ev_store.load_events_from_json(working_events)
-
-        # pasar eventos al scheduler (simple: llamar a un método existente o inyectar)
+            events = []
         if hasattr(scheduler, "load_events_from_list"):
-            scheduler.load_events_from_list(events)
+            try:
+                scheduler.load_events_from_list(events)
+            except Exception as e:
+                print("DEBUG app: scheduler.load_events_from_list error:", e)
         elif hasattr(controller, "load_events"):
-            controller.load_events(events)
+            try:
+                controller.load_events(events)
+            except Exception:
+                pass
         else:
-            # guardamos events en scheduler._events por compatibilidad mínima
+            try:
+                scheduler._events = events
+            except Exception:
+                pass
+
+        # Use single combined file (~/.hotel_planner/data.json) as sole source of events/inventory
+        COMBINED = Path.home() / ".hotel_planner" / "data.json"
+        # tell controller where to persist events
+        try:
+            if hasattr(controller, "set_events_path"):
+                controller.set_events_path(COMBINED)
+            else:
+                controller.events_path = COMBINED
+        except Exception:
+            pass
+
+        # load events from combined file (fallback to empty list)
+        events = []
+        try:
+            if COMBINED.exists():
+                payload = json.loads(COMBINED.read_text(encoding="utf-8") or "{}")
+                events = payload.get("events", []) or []
+            else:
+                events = []
+        except Exception as e:
+            print("DEBUG app: error reading combined data.json:", e)
+            events = []
+
+        # inject events into scheduler/controller
+        if hasattr(scheduler, "load_events_from_list"):
+            try:
+                scheduler.load_events_from_list(events)
+            except Exception as e:
+                print("DEBUG app: scheduler.load_events_from_list error:", e)
+        elif hasattr(controller, "load_events"):
+            try:
+                controller.load_events(events)
+            except Exception as e:
+                print("DEBUG app: controller.load_events error:", e)
+        else:
             try:
                 scheduler._events = events
             except Exception:
@@ -184,17 +247,7 @@ class App(customtkinter.CTk):
 
 
 if __name__ == "__main__":
-    DEFAULT = Path(__file__).resolve().parents[2] / "data" / "default_inventory.json"
-    WORKING = Path.home() / ".hotel_planner" / "inventory.json"
-    # asegurar default presente (opcional)
-    try:
-        _default_content = json.loads(DEFAULT.read_text(encoding="utf-8"))
-    except Exception:
-        _default_content = {"version":1,"resources":[]}
-    inv_store.write_default_if_missing(DEFAULT, _default_content)
-    working = inv_store.ensure_working_copy(DEFAULT, WORKING)
-    inventory = inv_store.load_inventory_from_json(working)
-    scheduler = Scheduler(inventory)
-    controller = Controller(scheduler)
-    app = App(controller=controller)
+    # Ejecutar la App usando el flujo combinado (data.json).
+    # No crear un controller externo: App() hará la carga unificada y creará controller/scheduler.
+    app = App()
     app.mainloop()
