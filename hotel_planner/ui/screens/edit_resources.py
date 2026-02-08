@@ -122,22 +122,22 @@ class AddRemoveResourceView(ctk.CTkFrame):
         return base
 
     def _write_working_inventory(self, resource_dict):
-        # always write to single combined file ~/.hotel_planner/data.json
-        COMBINED = Path.home() / ".hotel_planner" / "data.json"
+        # always write to single DATA file ~/.hotel_planner/data.json
+        DATA = Path.home() / ".hotel_planner" / "data.json"
         try:
             try:
-                payload = json.loads(COMBINED.read_text(encoding="utf-8")) if COMBINED.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
+                payload = json.loads(DATA.read_text(encoding="utf-8")) if DATA.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
             except Exception:
                 payload = {"version": 1, "inventory": {"resources": []}, "events": []}
             inv = payload.get("inventory") or {"resources": []}
             resources = inv.get("resources", [])
             resources.append(resource_dict)
             payload["inventory"] = {"resources": resources}
-            tmp = COMBINED.with_name(COMBINED.name + ".tmp")
-            COMBINED.parent.mkdir(parents=True, exist_ok=True)
+            tmp = DATA.with_name(DATA.name + ".tmp")
+            DATA.parent.mkdir(parents=True, exist_ok=True)
             with tmp.open("w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)
-            os.replace(str(tmp), str(COMBINED))
+            os.replace(str(tmp), str(DATA))
         except Exception as e:
             raise
 
@@ -162,12 +162,12 @@ class AddRemoveResourceView(ctk.CTkFrame):
         except Exception:
             existing_names = set()
 
-        # fallback: leer combined data.json si controller no devolvió nada
+        # fallback: leer DATA data.json si controller no devolvió nada
         if not existing_names:
             try:
-                COMBINED = Path.home() / ".hotel_planner" / "data.json"
-                if COMBINED.exists():
-                    payload = json.loads(COMBINED.read_text(encoding="utf-8") or "{}")
+                DATA = Path.home() / ".hotel_planner" / "data.json"
+                if DATA.exists():
+                    payload = json.loads(DATA.read_text(encoding="utf-8") or "{}")
                     resources_list = (payload.get("inventory") or {}).get("resources", []) or []
                     for rr in resources_list:
                         n = rr.get("name") if isinstance(rr, dict) else getattr(rr, "name", None)
@@ -212,16 +212,16 @@ class AddRemoveResourceView(ctk.CTkFrame):
         except Exception:
             pass
 
-        # fallback: write directly to combined data.json
+        # fallback: write directly to DATA data.json
         try:
             self._write_working_inventory(r)
 
-            # reload combined inventory and update runtime objects so UI sees change immediately
-            COMBINED = Path.home() / ".hotel_planner" / "data.json"
+            # reload DATA inventory and update runtime objects so UI sees change immediately
+            DATA = Path.home() / ".hotel_planner" / "data.json"
             new_inv = None
             try:
-                if COMBINED.exists():
-                    payload = json.loads(COMBINED.read_text(encoding="utf-8") or "{}")
+                if DATA.exists():
+                    payload = json.loads(DATA.read_text(encoding="utf-8") or "{}")
                     inv_payload = {"version": payload.get("version", 1), "resources": (payload.get("inventory") or {}).get("resources", [])}
                     # write ephemeral file and load via inv_store to get Inventory object
                     tmp_name = f"hotel_planner_inv_{os.getpid()}_{uuid.uuid4().hex}.json"

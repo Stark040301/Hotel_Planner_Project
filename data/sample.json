@@ -1,0 +1,1062 @@
+{
+  "version": 1,
+  "inventory": {
+    "resources": [
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Lobby / Recepción",
+        "capacity": 120,
+        "room_type": "recepción",
+        "interior": true,
+        "quantity": 1,
+        "requires": [
+          "Recepcionista",
+          "Extintor"
+        ],
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Bar Principal",
+        "capacity": 60,
+        "room_type": "bar",
+        "interior": true,
+        "quantity": 1,
+        "requires": [
+          "Bartender",
+          "Extintor"
+        ],
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Restaurante Principal",
+        "capacity": 140,
+        "room_type": "restaurante",
+        "interior": true,
+        "quantity": 1,
+        "requires": [
+          "Camarero",
+          "Extintor"
+        ],
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Cocina Central",
+        "capacity": 12,
+        "room_type": "cocina",
+        "interior": true,
+        "quantity": 1,
+        "requires": [
+          "Jefe de Cocina",
+          "Horno Industrial",
+          "Extintor",
+          "Botiquín de Cocina"
+        ],
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Salón de Conferencias",
+        "capacity": 200,
+        "room_type": "conferencia",
+        "interior": true,
+        "quantity": 1,
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Salón de Baile",
+        "capacity": 350,
+        "room_type": "baile",
+        "interior": true,
+        "quantity": 1,
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Sala de Actividades",
+        "capacity": 40,
+        "room_type": "actividad",
+        "interior": true,
+        "quantity": 1,
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Terraza Panorámica",
+        "capacity": 80,
+        "room_type": "terraza",
+        "interior": false,
+        "quantity": 1,
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Zona de Piscina",
+        "capacity": 100,
+        "room_type": "piscina",
+        "interior": false,
+        "quantity": 1,
+        "requires": [
+          "Salvavidas",
+          "Chaleco Salvavidas"
+        ],
+        "excludes": [
+          "Carpa Exterior (grande)"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Spa",
+        "capacity": 20,
+        "room_type": "spa",
+        "interior": true,
+        "quantity": 1,
+        "requires": [
+          "Masajista",
+          "Camas de Masaje"
+        ],
+        "excludes": [
+          "Contenedor de Productos Inflamables"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Gimnasio",
+        "capacity": 30,
+        "room_type": "gimnasio",
+        "interior": true,
+        "quantity": 1,
+        "requires": [
+          "Entrenador",
+          "Kit de Primeros Auxilios"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Lavandería",
+        "capacity": 6,
+        "room_type": "servicio",
+        "interior": true,
+        "quantity": 1,
+        "requires": [
+          "Plancha Industrial"
+        ]
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Estacionamiento",
+        "capacity": 200,
+        "room_type": "parking",
+        "interior": false,
+        "quantity": 1,
+        "requires": [
+          "Parqueador",
+          "Conos"
+        ]
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Recepcionista",
+        "role": "recepción",
+        "shift": "rotativo",
+        "quantity": 4
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Conserje",
+        "role": "conserje",
+        "shift": "rotativo",
+        "quantity": 2
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Botones",
+        "role": "botones",
+        "shift": "rotativo",
+        "quantity": 6
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Parqueador",
+        "role": "valet",
+        "shift": "rotativo",
+        "quantity": 4
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Jefe de Cocina",
+        "role": "chef",
+        "shift": "diurno",
+        "quantity": 1
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Sous Chef",
+        "role": "chef",
+        "shift": "diurno",
+        "quantity": 2
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Cocinero de Línea",
+        "role": "cocina",
+        "shift": "diurno",
+        "quantity": 8
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Ayudante de Cocina",
+        "role": "cocina",
+        "shift": "diurno",
+        "quantity": 6
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Lavaplatos",
+        "role": "cocina",
+        "shift": "diurno",
+        "quantity": 4
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Camarero",
+        "role": "servicio",
+        "shift": "rotativo",
+        "quantity": 12
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Anfitrión",
+        "role": "servicio",
+        "shift": "rotativo",
+        "quantity": 3
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Bartender",
+        "role": "bar",
+        "shift": "rotativo",
+        "quantity": 5
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Jefe de Eventos",
+        "role": "eventos",
+        "shift": "diurno",
+        "quantity": 1
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Coordinador de Actividades",
+        "role": "actividades",
+        "shift": "diurno",
+        "quantity": 2
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Salvavidas",
+        "role": "seguridad",
+        "shift": "diurno",
+        "quantity": 3
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Masajista",
+        "role": "spa",
+        "shift": "diurno",
+        "quantity": 4
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Entrenador",
+        "role": "fitness",
+        "shift": "diurno",
+        "quantity": 3
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Seguridad",
+        "role": "seguridad",
+        "shift": "rotativo",
+        "quantity": 35
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Personal de Mantenimiento",
+        "role": "mantenimiento",
+        "shift": "diurno",
+        "quantity": 6
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Lavandero",
+        "role": "lavandería",
+        "shift": "diurno",
+        "quantity": 2
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Generador Portátil",
+        "description": "UPS / generador móvil para eventos y cortes eléctricos",
+        "quantity": 3
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Generador Industrial",
+        "description": "Generador de mayor potencia para eventos grandes",
+        "quantity": 2,
+        "requires": [
+          "Personal de Mantenimiento",
+          "Contenedor de Productos Inflamables"
+        ],
+        "excludes": [
+          "Zona de Piscina"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Equipo de Sonido",
+        "description": "PA: amplificadores, altavoces, mixer",
+        "quantity": 2,
+        "requires": [
+          "Técnico de Sonido",
+          "Generador Portátil"
+        ]
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Técnico de Sonido",
+        "role": "técnico",
+        "shift": "eventos",
+        "quantity": 2
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Sistema de Iluminación",
+        "description": "Luces para escenario y pista",
+        "quantity": 2,
+        "requires": [
+          "Técnico de Iluminación",
+          "Generador Industrial"
+        ]
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Técnico de Iluminación",
+        "role": "técnico",
+        "shift": "eventos",
+        "quantity": 2
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Proyector Full HD",
+        "description": "Proyector para conferencias y presentaciones",
+        "quantity": 3,
+        "requires": [
+          "Operador AV",
+          "Pantalla de Proyección"
+        ]
+      },
+      {
+        "type": "Employee",
+        "category": "employee",
+        "name": "Operador AV",
+        "role": "técnico",
+        "shift": "eventos",
+        "quantity": 2
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Pantalla de Proyección",
+        "description": "Pantalla enrollable para conferencias",
+        "quantity": 4
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Micrófono Inalámbrico",
+        "description": "Micrófonos de mano inalámbricos",
+        "quantity": 10,
+        "requires": [
+          "Técnico de Sonido"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Mesas plegables",
+        "description": "Mesas para banquetes y conferencias",
+        "quantity": 50
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Sillas apilables",
+        "description": "Sillas para eventos",
+        "quantity": 300
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Mantelería de Repuesto",
+        "description": "Sets de manteles y servilletas por mesa",
+        "quantity": 100
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Cubertería",
+        "description": "Sets de cubiertos para servicio de comedor",
+        "quantity": 200
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Cristalería",
+        "description": "Copas, vasos y copas de vino",
+        "quantity": 400
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Carro Gastronómico",
+        "description": "Carro para traslado de vajilla y alimentos",
+        "quantity": 15,
+        "requires": [
+          "Camarero"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Horno Industrial",
+        "description": "Horno para cocina central",
+        "quantity": 2,
+        "requires": [
+          "Jefe de Cocina"
+        ],
+        "excludes": [
+          "Contenedor de Productos Inflamables"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Estación de Cocción (hornillas industriales)",
+        "description": "Placas y quemadores industriales",
+        "quantity": 4,
+        "requires": [
+          "Cocinero de Línea"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Cámara Frigorífica",
+        "description": "Almacenamiento refrigerado para alimentos",
+        "quantity": 2
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Carro de Ingredientes",
+        "description": "Carro para mise en place",
+        "quantity": 12
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Máquina de Hielo",
+        "description": "Genera hielo para bar y cocina",
+        "quantity": 3
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Vitrina Fría",
+        "description": "Vitrina para postres/entradas",
+        "quantity": 2
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Máquina Lavavajillas Industrial",
+        "description": "Lavado rápido de vajilla",
+        "quantity": 3,
+        "requires": [
+          "Lavaplatos"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Camas de Masaje",
+        "description": "Camas para tratamientos de spa",
+        "quantity": 6,
+        "requires": [
+          "Masajista"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Toallas de Spa",
+        "description": "Toallas grandes para tratamientos",
+        "quantity": 200
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Jacuzzi",
+        "description": "Unidad para tratamientos y relax",
+        "quantity": 2,
+        "requires": [
+          "Spa"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Equipo de Gimnasio",
+        "description": "Pesas, máquinas de cardio, colchonetas",
+        "quantity": 1,
+        "requires": [
+          "Gimnasio"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Tumbonas de Piscina",
+        "description": "Sillas reclinables para la zona de piscina",
+        "quantity": 60
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Chaleco Salvavidas",
+        "description": "Chalecos para uso en piscina/plays",
+        "quantity": 30,
+        "requires": [
+          "Salvavidas"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Kit de Primeros Auxilios",
+        "description": "Botiquín grande para emergencias",
+        "quantity": 10
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Extintor",
+        "description": "Extintores portátiles por normativa",
+        "quantity": 25
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Carro de Limpieza",
+        "description": "Carros con productos de limpieza",
+        "quantity": 20
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Aspiradora Industrial",
+        "description": "Aspiradoras para limpieza de áreas grandes",
+        "quantity": 8
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Plancha Industrial",
+        "description": "Plancha y mesa de planchado en lavandería",
+        "quantity": 2,
+        "requires": [
+          "Lavandero"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Carro de Ropa",
+        "description": "Carros para transporte de ropa sucia/limpia",
+        "quantity": 30
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Cámara de Seguridad Móvil",
+        "description": "Cámaras portátiles para eventos y seguridad",
+        "quantity": 8,
+        "requires": [
+          "Seguridad"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Conos",
+        "description": "Para control de tráfico en zona parqueo",
+        "quantity": 40
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Carpa Exterior (grande)",
+        "description": "Carpas para eventos al aire libre",
+        "quantity": 3,
+        "requires": [
+          "Jefe de Eventos"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Mesa de Registro",
+        "description": "Mesa para check-in de eventos",
+        "quantity": 6
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Terminal POS",
+        "description": "Terminales de cobro para restaurante/bar",
+        "quantity": 8,
+        "requires": [
+          "Recepcionista"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Botiquín de Cocina",
+        "description": "Kits y equipos para seguridad en cocina",
+        "quantity": 6
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Contenedor de Productos Inflamables",
+        "description": "Contenedor seguro para solventes/aislantes",
+        "quantity": 1,
+        "excludes": [
+          "Horno Industrial",
+          "Estación de Cocción"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Carro de Bar",
+        "description": "Mueble móvil con cristalería y bebidas",
+        "quantity": 6,
+        "requires": [
+          "Bartender"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Kit de Herramientas",
+        "description": "Herramientas para reparaciones rápidas",
+        "quantity": 4,
+        "requires": [
+          "Personal de Mantenimiento"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Generador Portátil (pequeño)",
+        "description": "Suministro auxiliar pequeño",
+        "quantity": 4
+      },
+      {
+        "type": "Room",
+        "category": "room",
+        "name": "Playa",
+        "quantity": 1,
+        "capacity": 500,
+        "room_type": "recreacion",
+        "interior": false,
+        "requires": [
+          "Salvavidas",
+          "Chaleco Salvavidas"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Red de Volley",
+        "quantity": 2,
+        "description": "Red de Volleyball",
+        "requires": [
+          "Playa",
+          "Balón de Volley"
+        ]
+      },
+      {
+        "type": "Item",
+        "category": "item",
+        "name": "Balón de Volley",
+        "quantity": 10,
+        "description": "Balón de Volleyball"
+      }
+    ]
+  },
+  "events": [
+    {
+      "name": "Clases Yoga Diarias",
+      "start": "2026-02-10T07:30:00",
+      "end": "2026-02-10T08:30:00",
+      "resources": [
+        {
+          "name": "gimnasio",
+          "quantity": 1
+        },
+        {
+          "name": "entrenador",
+          "quantity": 1
+        },
+        {
+          "name": "equipo de gimnasio",
+          "quantity": 1
+        },
+        {
+          "name": "kit de primeros auxilios",
+          "quantity": 1
+        },
+        {
+          "name": "extintor",
+          "quantity": 1
+        }
+      ],
+      "recurrence": "daily"
+    },
+    {
+      "name": "Volley de Playa",
+      "start": "2026-02-10T09:00:00",
+      "end": "2026-02-10T13:00:00",
+      "resources": [
+        {
+          "name": "playa",
+          "quantity": 1
+        },
+        {
+          "name": "salvavidas",
+          "quantity": 1
+        },
+        {
+          "name": "chaleco salvavidas",
+          "quantity": 1
+        },
+        {
+          "name": "red de volley",
+          "quantity": 1
+        },
+        {
+          "name": "balón de volley",
+          "quantity": 4
+        }
+      ],
+      "recurrence": "none"
+    },
+    {
+      "name": "Spa VIP",
+      "start": "2026-02-14T10:00:00",
+      "end": "2026-02-14T13:00:00",
+      "resources": [
+        {
+          "name": "spa",
+          "quantity": 1
+        },
+        {
+          "name": "camas de masaje",
+          "quantity": 2
+        },
+        {
+          "name": "masajista",
+          "quantity": 2
+        },
+        {
+          "name": "toallas de spa",
+          "quantity": 10
+        }
+      ],
+      "recurrence": null
+    },
+    {
+      "name": "Cena Degustación Mensual",
+      "start": "2026-03-05T20:00:00",
+      "end": "2026-03-05T23:00:00",
+      "resources": [
+        {
+          "name": "restaurante principal",
+          "quantity": 1
+        },
+        {
+          "name": "jefe de cocina",
+          "quantity": 1
+        },
+        {
+          "name": "sous chef",
+          "quantity": 2
+        },
+        {
+          "name": "camarero",
+          "quantity": 8
+        },
+        {
+          "name": "mantelería de repuesto",
+          "quantity": 20
+        },
+        {
+          "name": "extintor",
+          "quantity": 1
+        }
+      ],
+      "recurrence": "monthly"
+    },
+    {
+      "name": "Conferencia de Tecnología",
+      "start": "2026-03-15T09:00:00",
+      "end": "2026-03-15T18:00:00",
+      "resources": [
+        {
+          "name": "salón de conferencias",
+          "quantity": 1
+        },
+        {
+          "name": "proyector full hd",
+          "quantity": 1
+        },
+        {
+          "name": "pantalla de proyección",
+          "quantity": 1
+        },
+        {
+          "name": "micrófono inalámbrico",
+          "quantity": 2
+        },
+        {
+          "name": "operador av",
+          "quantity": 1
+        },
+        {
+          "name": "técnico de sonido",
+          "quantity": 1
+        }
+      ],
+      "recurrence": null
+    },
+    {
+      "name": "Capacitación de Staff",
+      "start": "2026-03-22T09:00:00",
+      "end": "2026-03-22T13:00:00",
+      "resources": [
+        {
+          "name": "lobby / recepción",
+          "quantity": 1
+        },
+        {
+          "name": "proyector full hd",
+          "quantity": 1
+        },
+        {
+          "name": "operador av",
+          "quantity": 1
+        },
+        {
+          "name": "recepcionista",
+          "quantity": 1
+        },
+        {
+          "name": "extintor",
+          "quantity": 1
+        },
+        {
+          "name": "pantalla de proyección",
+          "quantity": 1
+        }
+      ],
+      "recurrence": null
+    },
+    {
+      "name": "Boda",
+      "start": "2026-04-10T17:00:00",
+      "end": "2026-04-11T01:00:00",
+      "resources": [
+        {
+          "name": "salón de baile",
+          "quantity": 1
+        },
+        {
+          "name": "mesas plegables",
+          "quantity": 20
+        },
+        {
+          "name": "sillas apilables",
+          "quantity": 150
+        },
+        {
+          "name": "sistema de iluminación",
+          "quantity": 1
+        },
+        {
+          "name": "generador industrial",
+          "quantity": 1
+        },
+        {
+          "name": "camarero",
+          "quantity": 12
+        },
+        {
+          "name": "personal de mantenimiento",
+          "quantity": 1
+        },
+        {
+          "name": "contenedor de productos inflamables",
+          "quantity": 1
+        },
+        {
+          "name": "técnico de iluminación",
+          "quantity": 1
+        }
+      ],
+      "recurrence": null
+    },
+    {
+      "name": "Fiesta Piscina",
+      "start": "2026-05-20T16:00:00",
+      "end": "2026-05-20T21:00:00",
+      "resources": [
+        {
+          "name": "zona de piscina",
+          "quantity": 1
+        },
+        {
+          "name": "tumbonas de piscina",
+          "quantity": 30
+        },
+        {
+          "name": "equipo de sonido",
+          "quantity": 1
+        },
+        {
+          "name": "técnico de sonido",
+          "quantity": 1
+        },
+        {
+          "name": "generador portátil",
+          "quantity": 1
+        },
+        {
+          "name": "bartender",
+          "quantity": 2
+        },
+        {
+          "name": "salvavidas",
+          "quantity": 1
+        },
+        {
+          "name": "chaleco salvavidas",
+          "quantity": 1
+        }
+      ],
+      "recurrence": null
+    },
+    {
+      "name": "Volley de Playa 2",
+      "start": "2026-02-15T09:00",
+      "end": "2026-02-15T13:00",
+      "resources": [
+        {
+          "name": "Playa",
+          "quantity": 1
+        },
+        {
+          "name": "Salvavidas",
+          "quantity": 1
+        },
+        {
+          "name": "Chaleco Salvavidas",
+          "quantity": 1
+        },
+        {
+          "name": "Red de Volley",
+          "quantity": 1
+        },
+        {
+          "name": "Balón de Volley",
+          "quantity": 1
+        }
+      ],
+      "recurrence": "none",
+      "notes": ""
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.messagebox as msg
-from datetime import datetime
+from datetime import datetime, timedelta
 import customtkinter as ctk
 from typing import Optional, List, Dict
 from pathlib import Path
@@ -79,10 +79,12 @@ class ManageEventsView(ctk.CTkFrame):
         # buttons
         actions = ctk.CTkFrame(self)
         actions.pack(fill="x", padx=padx, pady=(0,12))
-        save_btn = ctk.CTkButton(actions, text="Guardar evento", command=self._save_event, width=160)
-        save_btn.pack(side="right", padx=6)
         cancel_btn = ctk.CTkButton(actions, text="Cancelar", command=self._clear_form, fg_color="#999999", width=120)
         cancel_btn.pack(side="right", padx=6)
+        find_btn = ctk.CTkButton(actions, text="Siguiente hueco", command=self._find_next_slot, width=160)
+        find_btn.pack(side="right", padx=6)
+        save_btn = ctk.CTkButton(actions, text="Guardar evento", command=self._save_event, width=160)
+        save_btn.pack(side="right", padx=6)
 
         # initial population of resources
         self._refresh_resource_names()
@@ -180,6 +182,72 @@ class ManageEventsView(ctk.CTkFrame):
             out.append({"name": name, "quantity": qty})
         return out
 
+    def _compute_duration_minutes(self) -> int:
+        """Return duration in minutes from current start/end fields or default 60."""
+        s = self.start_var.get().strip()
+        e = self.end_var.get().strip()
+        try:
+            if s and e and self._validate_iso(s) and self._validate_iso(e):
+                st = datetime.fromisoformat(s)
+                ed = datetime.fromisoformat(e)
+                if ed > st:
+                    return int((ed - st).total_seconds() // 60)
+        except Exception:
+            pass
+        return 60
+
+    def _find_next_slot(self):
+        """Busca el siguiente intervalo disponible y ofrece ponerlo en el formulario."""
+        if not self.controller or not hasattr(self.controller, "find_next_available"):
+            msg.showerror("No disponible", "No hay controlador disponible para buscar huecos.")
+            return
+
+        resources = self._gather_resources()
+        if not resources:
+            msg.showwarning("Recursos", "Añade al menos un recurso para buscar hueco disponible.")
+            return
+
+        # determine start_from (use start field or now) and window_end (start + 30 días)
+        try:
+            start_field = self.start_var.get().strip()
+            if start_field and self._validate_iso(start_field):
+                start_from = datetime.fromisoformat(start_field)
+            else:
+                start_from = datetime.now()
+        except Exception:
+            start_from = datetime.now()
+
+        duration_mins = self._compute_duration_minutes()
+        window_end = start_from + timedelta(days=30)
+
+        try:
+            res = self.controller.find_next_available(duration_mins, resources, start_from, window_end)
+        except Exception as e:
+            msg.showerror("Error", f"Error buscando hueco: {e}")
+            return
+
+        if not res:
+            msg.showinfo("No hay hueco", "No se encontró un intervalo disponible en el próximo mes.")
+            return
+
+        proposed_start, proposed_end = res
+        # normalize to minute precision
+        proposed_start = proposed_start.replace(second=0, microsecond=0)
+        proposed_end = proposed_end.replace(second=0, microsecond=0)
+        pretty = f"{proposed_start.isoformat()} → {proposed_end.isoformat()}"
+        if not msg.askyesno("Propuesta de hueco", f"Se propone el siguiente intervalo:\n\n{pretty}\n\n¿Desea usarlo?"):
+            return
+
+        # apply proposal
+        self.start_var.set(proposed_start.isoformat())
+        self.end_var.set(proposed_end.isoformat())
+        self._update_duration()
+        try:
+            root = self.winfo_toplevel()
+            root.event_generate("<<EventsDraftChanged>>", when="tail")
+        except Exception:
+            pass
+
     def _validate_iso(self, s: str) -> bool:
         try:
             datetime.fromisoformat(s)
@@ -248,20 +316,20 @@ class ManageEventsView(ctk.CTkFrame):
                     saved = False
                     save_errors = str(e)
 
-                # if controller accepted in-memory, persist to combined file
+                # if controller accepted in-memory, persist to DATA file
                 if saved:
                     try:
-                        COMBINED = Path.home() / ".hotel_planner" / "data.json"
+                        DATA = Path.home() / ".hotel_planner" / "data.json"
                         try:
-                            payload = json.loads(COMBINED.read_text(encoding="utf-8")) if COMBINED.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
+                            payload = json.loads(DATA.read_text(encoding="utf-8")) if DATA.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
                         except Exception:
                             payload = {"version": 1, "inventory": {"resources": []}, "events": []}
                         payload["events"] = existing
-                        tmp = COMBINED.with_name(COMBINED.name + ".tmp")
-                        COMBINED.parent.mkdir(parents=True, exist_ok=True)
+                        tmp = DATA.with_name(DATA.name + ".tmp")
+                        DATA.parent.mkdir(parents=True, exist_ok=True)
                         with tmp.open("w", encoding="utf-8") as f:
                             json.dump(payload, f, ensure_ascii=False, indent=2)
-                        os.replace(str(tmp), str(COMBINED))
+                        os.replace(str(tmp), str(DATA))
                         try:
                             root = self.winfo_toplevel()
                             root.event_generate("<<EventsChanged>>", when="tail")
@@ -293,17 +361,17 @@ class ManageEventsView(ctk.CTkFrame):
                     return
                 # on success persist to data.json
                 try:
-                    COMBINED = Path.home() / ".hotel_planner" / "data.json"
+                    DATA = Path.home() / ".hotel_planner" / "data.json"
                     try:
-                        payload = json.loads(COMBINED.read_text(encoding="utf-8")) if COMBINED.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
+                        payload = json.loads(DATA.read_text(encoding="utf-8")) if DATA.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
                     except Exception:
                         payload = {"version": 1, "inventory": {"resources": []}, "events": []}
                     payload["events"] = existing
-                    tmp = COMBINED.with_name(COMBINED.name + ".tmp")
-                    COMBINED.parent.mkdir(parents=True, exist_ok=True)
+                    tmp = DATA.with_name(DATA.name + ".tmp")
+                    DATA.parent.mkdir(parents=True, exist_ok=True)
                     with tmp.open("w", encoding="utf-8") as f:
                         json.dump(payload, f, ensure_ascii=False, indent=2)
-                    os.replace(str(tmp), str(COMBINED))
+                    os.replace(str(tmp), str(DATA))
                     try:
                         root = self.winfo_toplevel()
                         root.event_generate("<<EventsChanged>>", when="tail")

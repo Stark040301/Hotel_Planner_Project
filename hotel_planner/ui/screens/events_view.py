@@ -280,23 +280,23 @@ class PlannedEventsView(ctk.CTkFrame):
             msg.showwarning("No encontrado", f"No se encontró el evento '{vis_name}' en memoria.")
             return
 
-        # remove from list and persist to combined file
+        # remove from list and persist to DATA file
         try:
             removed = existing.pop(match_idx)
             # build serializable list
             serializable = [self._serialize_event(e) for e in existing]
-            COMBINED = Path.home() / ".hotel_planner" / "data.json"
+            DATA = Path.home() / ".hotel_planner" / "data.json"
             try:
-                payload = json.loads(COMBINED.read_text(encoding="utf-8")) if COMBINED.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
+                payload = json.loads(DATA.read_text(encoding="utf-8")) if DATA.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}
             except Exception:
                 payload = {"version": 1, "inventory": {"resources": []}, "events": []}
 
             payload["events"] = serializable
-            tmp = COMBINED.with_name(COMBINED.name + ".tmp")
-            COMBINED.parent.mkdir(parents=True, exist_ok=True)
+            tmp = DATA.with_name(DATA.name + ".tmp")
+            DATA.parent.mkdir(parents=True, exist_ok=True)
             with tmp.open("w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)
-            os.replace(str(tmp), str(COMBINED))
+            os.replace(str(tmp), str(DATA))
 
             # update controller/scheduler in-memory
             try:

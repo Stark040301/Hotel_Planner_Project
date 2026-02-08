@@ -276,11 +276,11 @@ class InventoryView(ctk.CTkFrame):
         except Exception:
             pass
 
-        # 2) update the single combined file ~/.hotel_planner/data.json
+        # 2) update the single DATA file ~/.hotel_planner/data.json
         try:
-            COMBINED = Path.home() / ".hotel_planner" / "data.json"
-            if COMBINED.exists():
-                raw = COMBINED.read_text(encoding="utf-8")
+            DATA = Path.home() / ".hotel_planner" / "data.json"
+            if DATA.exists():
+                raw = DATA.read_text(encoding="utf-8")
                 payload = json.loads(raw) if raw.strip() else {"version": 1, "inventory": {"resources": []}, "events": []}
             else:
                 payload = {"version": 1, "inventory": {"resources": []}, "events": []}
@@ -293,11 +293,39 @@ class InventoryView(ctk.CTkFrame):
                 msg.showwarning("No encontrado", f"No se encontró '{name}' en el inventory combinado.")
                 return
             payload["inventory"] = {"resources": resources}
-            tmp = COMBINED.with_name(COMBINED.name + ".tmp")
-            COMBINED.parent.mkdir(parents=True, exist_ok=True)
+
+            # Remove any events that reference this resource (case-insensitive match)
+            evs = payload.get("events", []) or []
+            keep = []
+            removed_events = []
+            target = name.strip().lower()
+            for ev in evs:
+                try:
+                    ev_resources = ev.get("resources", []) if isinstance(ev, dict) else []
+                    used = False
+                    for er in ev_resources:
+                        try:
+                            rname = (er.get("name") if isinstance(er, dict) else getattr(er, "name", "") ) or ""
+                            if rname.strip().lower() == target:
+                                used = True
+                                break
+                        except Exception:
+                            continue
+                    if used:
+                        removed_events.append(ev)
+                    else:
+                        keep.append(ev)
+                except Exception:
+                    keep.append(ev)
+            if removed_events:
+                payload["events"] = keep
+
+            # write DATA file atomically
+            tmp = DATA.with_name(DATA.name + ".tmp")
+            DATA.parent.mkdir(parents=True, exist_ok=True)
             with tmp.open("w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)
-            os.replace(str(tmp), str(COMBINED))
+            os.replace(str(tmp), str(DATA))
 
             # recargar inventario en memoria y actualizar controller/scheduler if possible
             # build a small ephemeral legacy-style payload so inv_store can parse it
@@ -331,13 +359,39 @@ class InventoryView(ctk.CTkFrame):
                         pass
             except Exception:
                 pass
+
+            # If we removed events, update controller/scheduler in-memory and notify event views
+            if removed_events:
+                try:
+                    serializable = payload.get("events", []) or []
+                    if self.controller and hasattr(self.controller, "load_events"):
+                        try:
+                            self.controller.load_events(serializable)
+                        except Exception:
+                            pass
+                    elif self.controller and hasattr(self.controller, "scheduler") and hasattr(self.controller.scheduler, "load_events_from_list"):
+                        try:
+                            self.controller.scheduler.load_events_from_list(serializable)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+                try:
+                    root = self.winfo_toplevel()
+                    root.event_generate("<<EventsChanged>>", when="tail")
+                except Exception:
+                    pass
+
             try:
                 root = self.winfo_toplevel()
                 root.event_generate("<<InventoryChanged>>", when="tail")
             except Exception:
                 pass
 
-            msg.showinfo("Ok", f"Recurso '{name}' eliminado del inventario combinado.")
+            info_msg = f"Recurso '{name}' eliminado del inventario combinado."
+            if removed_events:
+                info_msg += f" Se eliminaron {len(removed_events)} evento(s) que lo utilizaban."
+            msg.showinfo("Ok", info_msg)
             self.refresh()
             return
         except Exception as e:
