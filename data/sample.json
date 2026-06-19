@@ -795,7 +795,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": "daily"
+      "recurrence": "diario"
     },
     {
       "name": "Volley de Playa",
@@ -847,7 +847,7 @@
           "quantity": 10
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Cena Degustación Mensual",
@@ -879,7 +879,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": "monthly"
+      "recurrence": "mensual"
     },
     {
       "name": "Conferencia de Tecnología",
@@ -911,7 +911,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Capacitación de Staff",
@@ -943,7 +943,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Boda",
@@ -987,7 +987,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Fiesta Piscina",
@@ -1027,7 +1027,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Volley de Playa 2",

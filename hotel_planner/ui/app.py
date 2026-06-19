@@ -4,7 +4,7 @@ import customtkinter
 from hotel_planner.ui.controller import Controller
 from hotel_planner.models.inventory import Inventory
 from hotel_planner.core.scheduler import Scheduler
-from hotel_planner.ui.widgets.vertical_segmented import VerticalSegmentedButton
+from hotel_planner.ui.vertical_segmented import VerticalSegmentedButton
 from hotel_planner.ui.screens.inventory_view import InventoryView
 from hotel_planner.ui.screens.edit_resources import AddRemoveResourceView
 from hotel_planner.ui.screens.events_view import PlannedEventsView

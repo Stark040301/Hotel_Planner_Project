@@ -4,11 +4,6 @@ class Resource:
     """
     Clase base para todos los recursos del hotel.
     Representa cualquier activo limitado que puede ser asignado a un evento.
-
-    Nuevas capacidades:
-      - requires: nombres de recursos que deben acompañar a este recurso.
-      - excludes: nombres de recursos que no pueden coexistir con este recurso.
-      - excludes_categories: categorías que no pueden coexistir con este recurso.
     """
     def __init__(
         self,
