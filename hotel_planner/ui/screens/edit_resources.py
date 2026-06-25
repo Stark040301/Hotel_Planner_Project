@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 from hotel_planner.models import inventory_store as inv_store
+from hotel_planner.ui.form_validation import ValidationFeedback, FormValidator
 
 class AddRemoveResourceView(ctk.CTkFrame):
     """Pantalla para añadir recursos al inventario."""
@@ -19,57 +20,84 @@ class AddRemoveResourceView(ctk.CTkFrame):
         self._build_ui()
 
     def _build_ui(self):
-        self.title = ctk.CTkLabel(self, text="Añadir Recurso", font=ctk.CTkFont(size=18, weight="bold"))
-        self.title.pack(anchor="nw", padx=16, pady=12)
+        self.title = ctk.CTkLabel(
+            self, 
+            text="➕ Añadir Nuevo Recurso", 
+            font=ctk.CTkFont(size=20, weight="bold")
+        )
+        self.title.pack(anchor="nw", padx=16, pady=(16, 12))
+
+        # Validation feedback area
+        self.feedback = ValidationFeedback(self)
+        self.feedback.pack(fill="x", padx=16, pady=(0, 12))
 
         form = ctk.CTkFrame(self)
-        form.pack(anchor="nw", padx=16, pady=8, fill="x")
+        form.pack(anchor="nw", padx=16, pady=12, fill="x")
 
         # Tipo (Room / Employee / Item)
-        ctk.CTkLabel(form, text="Tipo").grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(form, text="Tipo", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, sticky="w", pady=(0, 6))
         self.type_var = tk.StringVar(value="Item")
-        ttk.Combobox(form, textvariable=self.type_var, values=["Room", "Employee", "Item"], state="readonly", width=18).grid(row=0, column=1, padx=8, pady=6, sticky="w")
+        ttk.Combobox(form, textvariable=self.type_var, values=["Room", "Employee", "Item"], state="readonly", width=20).grid(row=0, column=1, padx=12, pady=(0, 6), sticky="w")
 
-        # Nombre
-        ctk.CTkLabel(form, text="Nombre").grid(row=1, column=0, sticky="w")
+        # Nombre (required field)
+        ctk.CTkLabel(form, text="Nombre *", font=ctk.CTkFont(weight="bold")).grid(row=1, column=0, sticky="w", pady=(0, 6))
         self.name_var = tk.StringVar()
-        ctk.CTkEntry(form, textvariable=self.name_var, width=480).grid(row=1, column=1, columnspan=3, padx=8, pady=6, sticky="w")
+        self.name_entry = ctk.CTkEntry(form, textvariable=self.name_var, width=400)
+        self.name_entry.grid(row=1, column=1, columnspan=3, padx=12, pady=(0, 6), sticky="ew")
 
         # Cantidad
-        ctk.CTkLabel(form, text="Cantidad").grid(row=2, column=0, sticky="w")
+        ctk.CTkLabel(form, text="Cantidad", font=ctk.CTkFont(weight="bold")).grid(row=2, column=0, sticky="w", pady=(0, 6))
         self.qty_var = tk.IntVar(value=1)
-        tk.Spinbox(form, from_=0, to=9999, textvariable=self.qty_var, width=8).grid(row=2, column=1, padx=8, pady=6, sticky="w")
+        tk.Spinbox(form, from_=0, to=9999, textvariable=self.qty_var, width=10).grid(row=2, column=1, padx=12, pady=(0, 12), sticky="w")
 
         # Descripción / rol / capacity
-        ctk.CTkLabel(form, text="Descripción / Atributos").grid(row=3, column=0, sticky="nw")
-        self.desc_txt = tk.Text(form, height=4, width=60)
-        self.desc_txt.grid(row=3, column=1, columnspan=3, padx=8, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Descripción / Atributos", font=ctk.CTkFont(weight="bold")).grid(row=3, column=0, sticky="nw", pady=(0, 6))
+        self.desc_txt = tk.Text(form, height=4, width=50)
+        self.desc_txt.grid(row=3, column=1, columnspan=3, padx=12, pady=(0, 12), sticky="ew")
 
         # Campos específicos para Room / Employee hints
-        ctk.CTkLabel(form, text="Room: capacity, room_type, interior (ej: 120,recepción,True)").grid(row=4, column=1, columnspan=3, sticky="w", padx=8)
+        hint_font = ctk.CTkFont(size=11)
+        ctk.CTkLabel(form, text="💡 Room: capacity, room_type, interior (ej: 120,recepción,True)", font=hint_font).grid(row=4, column=1, columnspan=3, sticky="w", padx=12, pady=(0, 4))
 
-        ctk.CTkLabel(form, text="Employee: role, shift (ej: recepción,rotativo)").grid(row=5, column=1, columnspan=3, sticky="w", padx=8)
+        ctk.CTkLabel(form, text="💡 Employee: role, shift (ej: recepción,rotativo)", font=hint_font).grid(row=5, column=1, columnspan=3, sticky="w", padx=12, pady=(0, 12))
 
         # Requires / Excludes (comma separated)
-        ctk.CTkLabel(form, text="Requires (comma separated)").grid(row=6, column=0, sticky="w")
+        ctk.CTkLabel(form, text="Requisitos (separados por comas)", font=ctk.CTkFont(weight="bold")).grid(row=6, column=0, sticky="w", pady=(0, 6))
         self.requires_var = tk.StringVar()
-        ctk.CTkEntry(form, textvariable=self.requires_var, width=480).grid(row=6, column=1, columnspan=3, padx=8, pady=6, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.requires_var, width=400).grid(row=6, column=1, columnspan=3, padx=12, pady=(0, 6), sticky="ew")
 
-        ctk.CTkLabel(form, text="Excludes (comma separated)").grid(row=7, column=0, sticky="w")
+        ctk.CTkLabel(form, text="Exclusiones (separadas por comas)", font=ctk.CTkFont(weight="bold")).grid(row=7, column=0, sticky="w", pady=(0, 6))
         self.excludes_var = tk.StringVar()
-        ctk.CTkEntry(form, textvariable=self.excludes_var, width=480).grid(row=7, column=1, columnspan=3, padx=8, pady=6, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.excludes_var, width=400).grid(row=7, column=1, columnspan=3, padx=12, pady=(0, 6), sticky="ew")
 
-        ctk.CTkLabel(form, text="Excludes categories (comma separated)").grid(row=8, column=0, sticky="w")
+        ctk.CTkLabel(form, text="Exclus. Categorías (separadas por comas)", font=ctk.CTkFont(weight="bold")).grid(row=8, column=0, sticky="w", pady=(0, 6))
         self.excl_cat_var = tk.StringVar()
-        ctk.CTkEntry(form, textvariable=self.excl_cat_var, width=480).grid(row=8, column=1, columnspan=3, padx=8, pady=6, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.excl_cat_var, width=400).grid(row=8, column=1, columnspan=3, padx=12, pady=(0, 6), sticky="ew")
 
         # actions
         actions = ctk.CTkFrame(self)
-        actions.pack(fill="x", padx=16, pady=(8,12))
-        save_btn = ctk.CTkButton(actions, text="Guardar recurso", command=self._on_save, width=160)
-        save_btn.pack(side="right", padx=6)
-        cancel_btn = ctk.CTkButton(actions, text="Cancelar", command=self._on_cancel, width=120, fg_color="#999")
-        cancel_btn.pack(side="right", padx=6)
+        actions.pack(fill="x", padx=16, pady=(16, 12))
+        
+        cancel_btn = ctk.CTkButton(
+            actions, 
+            text="✕ Cancelar", 
+            command=self._on_cancel, 
+            width=120, 
+            corner_radius=6,
+            fg_color="#999999",
+            hover_color="#737373"
+        )
+        cancel_btn.pack(side="right", padx=8)
+        
+        save_btn = ctk.CTkButton(
+            actions, 
+            text="✓ Guardar", 
+            command=self._on_save, 
+            width=140,
+            corner_radius=6,
+            hover_color="#059669"
+        )
+        save_btn.pack(side="right", padx=8)
 
     def _on_cancel(self):
         self.name_var.set("")
@@ -79,6 +107,7 @@ class AddRemoveResourceView(ctk.CTkFrame):
         self.excludes_var.set("")
         self.excl_cat_var.set("")
         self.type_var.set("Item")
+        self.feedback.clear()
 
     def _parse_csv(self, s: str):
         return [x.strip() for x in (s or "").split(",") if x.strip()]
@@ -143,9 +172,12 @@ class AddRemoveResourceView(ctk.CTkFrame):
 
     def _on_save(self):
         name = self.name_var.get().strip()
+        
+        # Validate required fields
         if not name:
-            msg.showerror("Error", "El recurso necesita un nombre.")
+            self.feedback.show_error("El nombre del recurso es obligatorio")
             return
+        
         r = self._build_resource_dict()
 
         # --- comprobación: no permitir duplicados por nombre (case-insensitive) ---
@@ -177,7 +209,7 @@ class AddRemoveResourceView(ctk.CTkFrame):
                 pass
 
         if name.strip().lower() in existing_names:
-            msg.showerror("Error", f"Ya existe un recurso con el nombre '{name}'. Elige otro nombre o elimina el existente.")
+            self.feedback.show_error(f"El recurso '{name}' ya existe. Elige otro nombre.")
             return
         # --- fin comprobación ---
 
@@ -188,7 +220,8 @@ class AddRemoveResourceView(ctk.CTkFrame):
                 if hasattr(self.controller, "add_resource"):
                     ok, info = self.controller.add_resource(r)
                     if ok:
-                        msg.showinfo("Ok", "Recurso añadido.")
+                        self.feedback.show_success(f"✓ Recurso '{name}' añadido correctamente")
+                        self.after(1500, self._on_cancel)
                         return
                     else:
                         msg.showerror("Error", f"No se pudo añadir: {info}")

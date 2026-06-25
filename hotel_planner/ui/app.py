@@ -9,6 +9,8 @@ from hotel_planner.ui.screens.inventory_view import InventoryView
 from hotel_planner.ui.screens.edit_resources import AddRemoveResourceView
 from hotel_planner.ui.screens.events_view import PlannedEventsView
 from hotel_planner.ui.screens.create_event import ManageEventsView
+from hotel_planner.ui.styles import ProfessionalTheme as Theme, PADDINGS
+from hotel_planner.ui.advanced_ui import AccessibilityHelper, ResponsiveGrid
 from pathlib import Path
 import json
 import tempfile
@@ -18,8 +20,8 @@ from hotel_planner.models import inventory_store as inv_store
 from hotel_planner.models import event_store as ev_store
 import tkinter.filedialog as fd
 import shutil
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue")
+customtkinter.set_appearance_mode("System")
+customtkinter.set_default_color_theme("blue")
 
 
 class App(customtkinter.CTk):
@@ -27,8 +29,20 @@ class App(customtkinter.CTk):
         super().__init__()
 
         # configure window
-        self.title("Hotel Event Manager")
-        self.geometry(f"{1100}x{580}")
+        self.title("Hotel Event Manager 🏨")
+        
+        # Responsive window sizing
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        # Use 85% of screen but minimum 1200x680
+        ideal_width = max(1200, int(screen_width * 0.85))
+        ideal_height = max(680, int(screen_height * 0.80))
+        
+        self.geometry(f"{ideal_width}x{ideal_height}")
+        
+        # Set minimum window size to prevent layout breakage
+        self.minsize(1000, 600)
         # controller: usar el pasado o crear uno por defecto
         if controller is None:
             # Prefer single DATA file ~/.hotel_planner/data.json
@@ -109,13 +123,25 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure((2, 3), weight=0)
         self.grid_rowconfigure((0, 1, 2), weight=1)
+        
+        # Setup keyboard shortcuts for accessibility
+        self.bind("<Control-i>", lambda e: self.on_menu_inventory())          # Ctrl+I = Inventario
+        self.bind("<Control-a>", lambda e: self.on_menu_add_resource())       # Ctrl+A = Añadir
+        self.bind("<Control-e>", lambda e: self.on_menu_planned_events())     # Ctrl+E = Eventos
+        self.bind("<Control-c>", lambda e: self.on_menu_create_event())       # Ctrl+C = Crear
 
         # create sidebar frame with widgets
         self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(3, weight=1)
-        self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="Hotel Event Manager", font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        
+        self.logo_label = customtkinter.CTkLabel(
+            self.sidebar_frame, 
+            text="Hotel Event\nManager", 
+            font=customtkinter.CTkFont(size=18, weight="bold"),
+            text_color="#2563EB"
+        )
+        self.logo_label.grid(row=0, column=0, padx=16, pady=(24, 16))
 
         # mapping de etiqueta -> método
         self._seg_handlers = {
@@ -130,32 +156,67 @@ class App(customtkinter.CTk):
             list(self._seg_handlers.keys()),
             command=lambda v: self._seg_handlers.get(v, self._on_segment_default)(v),
             width=160,
-            btn_height=36,
+            btn_height=40,
             corner_radius=8,
         )
-        self.seg_button.grid(row=1, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+        self.seg_button.grid(row=1, column=0, padx=(16, 12), pady=(12, 16), sticky="ew")
         
         # Export / Import buttons (above appearance controls)
-        self.export_btn = customtkinter.CTkButton(self.sidebar_frame, text="Exportar a JSON", command=self._on_export, width=120)
-        self.export_btn.grid(row=4, column=0, padx=20, pady=(12, 6))
-        self.import_btn = customtkinter.CTkButton(self.sidebar_frame, text="Importar desde JSON", command=self._on_import, width=120)
-        self.import_btn.grid(row=5, column=0, padx=20, pady=(0, 8))
+        self.export_btn = customtkinter.CTkButton(
+            self.sidebar_frame, 
+            text="💾 Exportar JSON", 
+            command=self._on_export, 
+            width=130,
+            corner_radius=6,
+            hover_color="#059669"
+        )
+        self.export_btn.grid(row=4, column=0, padx=16, pady=(12, 8))
+        
+        self.import_btn = customtkinter.CTkButton(
+            self.sidebar_frame, 
+            text="📥 Importar JSON", 
+            command=self._on_import, 
+            width=130,
+            corner_radius=6,
+            hover_color="#059669"
+        )
+        self.import_btn.grid(row=5, column=0, padx=16, pady=(0, 12))
 
-        self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=6, column=0, padx=20, pady=(6, 0))
-        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
-                                                                       command=self.change_appearance_mode_event)
-        self.appearance_mode_optionemenu.grid(row=7, column=0, padx=20, pady=(10, 10))
-        self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
-        self.scaling_label.grid(row=8, column=0, padx=20, pady=(10, 0))
-        self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"],
-                                                               command=self.change_scaling_event)
-        self.scaling_optionemenu.grid(row=9, column=0, padx=20, pady=(10, 20))
+        self.appearance_mode_label = customtkinter.CTkLabel(
+            self.sidebar_frame, 
+            text="Apariencia:", 
+            anchor="w",
+            font=customtkinter.CTkFont(size=12, weight="bold")
+        )
+        self.appearance_mode_label.grid(row=6, column=0, padx=16, pady=(16, 8))
+        
+        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(
+            self.sidebar_frame, 
+            values=["Light", "Dark", "System"],
+            command=self.change_appearance_mode_event,
+            corner_radius=6
+        )
+        self.appearance_mode_optionemenu.grid(row=7, column=0, padx=16, pady=(0, 12))
+        
+        self.scaling_label = customtkinter.CTkLabel(
+            self.sidebar_frame, 
+            text="Escala UI:", 
+            anchor="w",
+            font=customtkinter.CTkFont(size=12, weight="bold")
+        )
+        self.scaling_label.grid(row=8, column=0, padx=16, pady=(0, 8))
+        
+        self.scaling_optionemenu = customtkinter.CTkOptionMenu(
+            self.sidebar_frame, 
+            values=["80%", "90%", "100%", "110%", "120%"],
+            command=self.change_scaling_event,
+            corner_radius=6
+        )
+        self.scaling_optionemenu.grid(row=9, column=0, padx=16, pady=(0, 20))
 
         # --- Main area: contenedor y pantallas por cada opción del segmented ---
         self.main_frame = customtkinter.CTkFrame(self, corner_radius=0)
-        self.main_frame.grid(row=0, column=1, rowspan=4, columnspan=3, sticky="nsew", padx=12, pady=12)
-        # asegúrate que el main_frame expande su contenido
+        self.main_frame.grid(row=0, column=1, rowspan=4, columnspan=3, sticky="nsew", padx=16, pady=16)
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
