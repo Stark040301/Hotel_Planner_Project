@@ -1,17 +1,77 @@
-# Entorno virtual
+# ==========================================
+# ENTORNOS VIRTUALES (Python)
+# ==========================================
 venv/
+hotel_planner_env/
+.env/
+.virtualenv/
+pyenv/
 
-# Archivos de Python compilados
+# ==========================================
+# ARCHIVOS COMPILADOS DE PYTHON
+# ==========================================
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 *$py.class
 
-# Archivos de sistema (Linux/macOS)
+# ==========================================
+# CACHÉ DE PRUEBAS Y COBERTURA
+# ==========================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ==========================================
+# ARCHIVOS DE SISTEMA (macOS / Windows / Linux)
+# ==========================================
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# ==========================================
+# ARCHIVOS DE LOGS Y TEMPORALES
+# ==========================================
+*.log
+*.pid
+*.tmp
+*.temp
+
+# ==========================================
+# DATOS LOCALES GENERADOS POR LA APP (OPCIONAL)
+# ==========================================
+data/
+
+# ==========================================
+# ARCHIVOS DE DISTRIBUCIÓN Y PAQUETES
+# ==========================================
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ==========================================
+# CONFIGURACIÓN DE EDITORES / IDEs
+# ==========================================
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
 *.swp
 
-# Archivos de logs
-*.log
-
-# Archivos de datos temporales (opcional)
-*.tmp
+# ==========================================
+# OTROS (OPCIONAL)
+# ==========================================
+*.db                     # si usas SQLite
+*.sqlite3
+.env.local
