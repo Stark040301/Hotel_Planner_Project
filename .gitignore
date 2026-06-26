@@ -46,10 +46,6 @@ Thumbs.db
 *.tmp
 *.temp
 
-# ==========================================
-# DATOS LOCALES GENERADOS POR LA APP (OPCIONAL)
-# ==========================================
-data/
 
 # ==========================================
 # ARCHIVOS DE DISTRIBUCIÓN Y PAQUETES

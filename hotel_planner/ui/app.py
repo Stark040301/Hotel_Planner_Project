@@ -47,7 +47,7 @@ class App(customtkinter.CTk):
         if controller is None:
             # Prefer single DATA file ~/.hotel_planner/data.json
             DATA_WORKING = Path.home() / ".hotel_planner" / "data.json"
-            DATA_DEFAULT = Path(__file__).resolve().parents[2] / "data" / "default_data.json"
+            DATA_DEFAULT = Path(__file__).resolve().parents[1] / "data" / "default_data.json"
             # ensure default exists (use unified_store helper)
             try:
                 default_payload = json.loads(DATA_DEFAULT.read_text(encoding="utf-8")) if DATA_DEFAULT.exists() else {"version": 1, "inventory": {"resources": []}, "events": []}

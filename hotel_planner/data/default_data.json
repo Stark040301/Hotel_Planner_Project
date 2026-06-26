@@ -795,7 +795,35 @@
           "quantity": 1
         }
       ],
-      "recurrence": "daily"
+      "recurrence": "diario"
+    },
+    {
+      "name": "Volley de Playa",
+      "start": "2026-02-10T09:00:00",
+      "end": "2026-02-10T13:00:00",
+      "resources": [
+        {
+          "name": "playa",
+          "quantity": 1
+        },
+        {
+          "name": "salvavidas",
+          "quantity": 1
+        },
+        {
+          "name": "chaleco salvavidas",
+          "quantity": 1
+        },
+        {
+          "name": "red de volley",
+          "quantity": 1
+        },
+        {
+          "name": "balón de volley",
+          "quantity": 4
+        }
+      ],
+      "recurrence": "none"
     },
     {
       "name": "Spa VIP",
@@ -819,7 +847,7 @@
           "quantity": 10
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Cena Degustación Mensual",
@@ -851,7 +879,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": "monthly"
+      "recurrence": "mensual"
     },
     {
       "name": "Conferencia de Tecnología",
@@ -883,7 +911,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Capacitación de Staff",
@@ -915,7 +943,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Boda",
@@ -959,7 +987,7 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
       "name": "Fiesta Piscina",
@@ -999,12 +1027,12 @@
           "quantity": 1
         }
       ],
-      "recurrence": null
+      "recurrence": "none"
     },
     {
-      "name": "Volley de Playa",
-      "start": "2026-02-10T09:00",
-      "end": "2026-02-10T13:00",
+      "name": "Volley de Playa 2",
+      "start": "2026-02-15T09:00",
+      "end": "2026-02-15T13:00",
       "resources": [
         {
           "name": "Playa",
@@ -1024,7 +1052,7 @@
         },
         {
           "name": "Balón de Volley",
-          "quantity": 4
+          "quantity": 1
         }
       ],
       "recurrence": "none",

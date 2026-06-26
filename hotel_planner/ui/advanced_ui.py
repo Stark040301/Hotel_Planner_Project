@@ -289,7 +289,7 @@ class AccessibilityHelper:
         return ratio >= minimum
     
     @staticmethod
-    def make_keyboard_navigable(widget, focus_order: List[ctk.CTkWidget]):
+    def make_keyboard_navigable(widget, focus_order: List):
         """
         Make widgets keyboard navigable using Tab and Shift+Tab.
         
