@@ -4,9 +4,7 @@
 
 **Hotel Event Manager** es una aplicación de escritorio desarrollada en Python que facilita la gestión de eventos en establecimientos hoteleros. Su propósito es permitir al personal del hotel administrar el inventario de recursos (salas, empleados y objetos) y planificar eventos (reuniones, conferencias, bodas, etc.) de forma eficiente, evitando solapamientos y respetando las restricciones de compatibilidad entre recursos.
 
-El programa surge de la necesidad de sustituir las hojas de cálculo y los calendarios manuales por una herramienta visual e intuitiva que centralice toda la información. Durante el desarrollo me he centrado en ofrecer una interfaz moderna, accesible y responsiva, junto con un motor de planificación robusto capaz de validar conflictos y sugerir huecos libres.
-
-El proyecto se ha diseñado siguiendo una arquitectura **Modelo‑Vista‑Controlador (MVC)**, lo que ha permitido separar claramente la lógica de negocio, la presentación y el flujo de control. La aplicación se ejecuta en entornos Windows, macOS y Linux, y todos los datos se persisten en un único archivo JSON ubicado en el directorio del usuario.
+Durante el desarrollo me he centrado en ofrecer una interfaz moderna, accesible y responsiva, junto con un motor de planificación robusto capaz de validar conflictos y sugerir huecos libres. El proyecto se ha diseñado siguiendo una arquitectura **Modelo‑Vista‑Controlador (MVC)**, lo que ha permitido separar claramente la lógica de negocio, la presentación y el flujo de control. La aplicación se ejecuta en entornos Windows, macOS y Linux, y todos los datos se persisten en un único archivo JSON ubicado en el directorio del usuario.
 
 ---
 
@@ -187,7 +185,7 @@ También hay botones para exportar/importar el archivo JSON y controles para cam
 3. Selecciona la fecha y hora de inicio y fin utilizando el calendario (clic en el botón 📅) o escribiendo manualmente.
 4. Añade los recursos necesarios haciendo clic en "+ Recurso". Elige un recurso de la lista desplegable y establece la cantidad.
 5. Opcionalmente, selecciona una recurrencia y añade notas.
-6. Si deseas que el sistema te proponga un hueco libre, haz clic en "Siguiente Hueco". Aparecerá un diálogo con la propuesta; si aceptas, se rellenarán automáticamente los campos de fecha.
+6. Si existe solapamiento con otro evento debido a la disponibilidad de recursos en la fecha introducida y deseas que el sistema te proponga un hueco libre, haz clic en "Siguiente Hueco". Aparecerá un diálogo con la propuesta; si aceptas, se rellenarán automáticamente los campos de fecha.
 7. Pulsa "Guardar". El evento se añadirá y aparecerá en la lista de eventos planificados.
 
 ### 5.4. Ejemplo de uso: Editar un recurso
@@ -252,7 +250,6 @@ Aunque el sistema es funcional, he identificado varias áreas de mejora que podr
 - **Edición de eventos**: Actualmente solo se pueden crear y eliminar. Sería útil poder modificar un evento existente.
 - **Recurrencias avanzadas**: Implementar excepciones en patrones recurrentes (por ejemplo, "cada lunes excepto festivos").
 - **Autenticación de usuarios**: Para entornos con múltiples operadores.
-- **Soporte para lectores de pantalla**: Mejorar la accesibilidad para personas con discapacidad visual.
-- **Exportación a formatos estándar**: Generar informes en PDF o calendarios en iCalendar.
+- **Exportación a formatos estándar**: Generar informes en PDF y otros formatos.
 
-En definitiva, el proyecto ha sentado unas bases sólidas para un sistema de planificación hotelera completo y profesional. Estoy satisfecho con el resultado y con todo lo que he aprendido en el camino.
+En definitiva, el proyecto ha sentado unas bases sólidas para un sistema de planificación hotelera completo y profesional. Aunque sí quisiera seguirlo mejorando en el futuro, estoy satisfecho con el resultado y con todo lo que he aprendido en el camino.
